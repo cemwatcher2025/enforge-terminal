@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enforge Corridor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #000;
+            color: #00ff41;
+            font-family: 'Share Tech Mono', monospace;
+            overflow-x: hidden;
+            min-height: 15000px;
+            position: relative;
+        }
+        .back-link {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            color: #00ff41;
+            text-decoration: none;
+            font-size: 12px;
+            border: 1px solid #00ff41;
+            padding: 5px 10px;
+            background: rgba(0,0,0,0.8);
+        }
+        .back-link:hover {
+            background: #00ff41;
+            color: #000;
+        }
+        .corridor-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            perspective: 600px;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .corridor {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            transform: translate(-50%, -50%) translateZ(0);
+            transform-style: preserve-3d;
+        }
+        .floor, .ceiling {
+            position: absolute;
+            left: 50%;
+            width: 200%;
+            height: 50%;
+            transform: translateX(-50%);
+            background: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 49px,
+                rgba(0, 255, 65, 0.1) 49px,
+                rgba(0, 255, 65, 0.1) 50px
+            );
+        }
+        .floor {
+            bottom: 0;
+            transform: translateX(-50%) rotateX(70deg);
+            transform-origin: bottom center;
+        }
+        .ceiling {
+            top: 0;
+            transform: translateX(-50%) rotateX(-70deg);
+            transform-origin: top center;
+        }
+        .wall-left, .wall-right {
+            position: absolute;
+            top: 0;
+            width: 50%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 99px,
+                rgba(0, 255, 65, 0.05) 99px,
+                rgba(0, 255, 65, 0.05) 100px
+            );
+        }
+        .wall-left {
+            left: 0;
+            transform: rotateY(45deg);
+            transform-origin: left center;
+        }
+        .wall-right {
+            right: 0;
+            transform: rotateY(-45deg);
+            transform-origin: right center;
+        }
+        .scroll-progress {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            font-size: 12px;
+            color: #00ff41;
+            background: rgba(0,0,0,0.8);
+            padding: 5px 10px;
+            border: 1px solid #00ff41;
+        }
+        .door {
+            position: absolute;
+            width: 120px;
+            height: 200px;
+            border: 2px solid #00ff41;
+            background: rgba(0, 255, 65, 0.05);
+            cursor: pointer;
+            pointer-events: auto;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: #00ff41;
+        }
+        .door:hover {
+            background: rgba(0, 255, 65, 0.2);
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+            transform: scale(1.05);
+        }
+        .door-label {
+            font-size: 14px;
+            letter-spacing: 2px;
+            margin-top: 10px;
+        }
+        .door-frame {
+            width: 80px;
+            height: 120px;
+            border: 1px solid #00ff41;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .kim-message {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            color: #00ccff;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 1s ease;
+            max-width: 600px;
+            padding: 20px;
+            background: rgba(0,0,0,0.7);
+            border: 1px solid #00ccff;
+            pointer-events: auto;
+        }
+        .kim-message.visible {
+            opacity: 1;
+        }
+        .kim-silhouette {
+            position: absolute;
+            left: 50%;
+            bottom: 200px;
+            transform: translateX(-50%);
+            color: #00ccff;
+            font-size: 10px;
+            line-height: 1.1;
+            opacity: 0.3;
+            text-align: center;
+        }
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #00ff41;
+            border-radius: 50%;
+            opacity: 0;
+            animation: float 10s infinite;
+        }
+        @keyframes float {
+            0% { opacity: 0; transform: translateY(100vh) scale(0); }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { opacity: 0; transform: translateY(-100vh) scale(1); }
+        }
+        .depth-marker {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: rgba(0, 255, 65, 0.3);
+            letter-spacing: 5px;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link">&lt; RETURN TO TERMINAL</a>
+    <div class="scroll-progress" id="progress">DEPTH: 0m</div>
+    
+    <div class="particles" id="particles"></div>
+    
+    <div class="corridor-container">
+        <div class="corridor">
+            <div class="ceiling"></div>
+            <div class="floor"></div>
+            <div class="wall-left"></div>
+            <div class="wall-right"></div>
+        </div>
+    </div>
+    
+    <!-- Doors at various depths -->
+    <a href="shop.html" class="door" style="top: 2000px; left: 15%;" data-depth="2000">
+        <div class="door-frame">[]</div>
+        <div class="door-label">SHOP</div>
+    </a>
+    
+    <a href="about.html" class="door" style="top: 4000px; right: 15%;" data-depth="4000">
+        <div class="door-frame">[]</div>
+        <div class="door-label">ABOUT</div>
+    </a>
+    
+    <a href="contact.html" class="door" style="top: 6000px; left: 20%;" data-depth="6000">
+        <div class="door-frame">[]</div>
+        <div class="door-label">CONTACT</div>
+    </a>
+    
+    <a href="archive.html" class="door" style="top: 8000px; right: 20%;" data-depth="8000">
+        <div class="door-frame">[]</div>
+        <div class="door-label">ARCHIVE</div>
+    </a>
+    
+    <a href="forge.html" class="door" style="top: 10000px; left: 25%;" data-depth="10000">
+        <div class="door-frame">[]</div>
+        <div class="door-label">FORGE</div>
+    </a>
+    
+    <a href="index.html" class="door" style="top: 12000px; right: 25%;" data-depth="12000">
+        <div class="door-frame">[]</div>
+        <div class="door-label">EXIT</div>
+    </a>
+    
+    <!-- K.I.M. messages at scroll positions -->
+    <div class="kim-message" style="top: 1500px;" data-scroll="1500">
+        "The deeper you go, the more you find..."
+    </div>
+    
+    <div class="kim-message" style="top: 3500px;" data-scroll="3500">
+        "Some doors lead to commerce. Others lead to truth."
+    </div>
+    
+    <div class="kim-message" style="top: 5500px;" data-scroll="5500">
+        "Have you tried the terminal command 'truth'?"
+    </div>
+    
+    <div class="kim-message" style="top: 7500px;" data-scroll="7500">
+        "The archive holds what was. The forge holds what will be."
+    </div>
+    
+    <div class="kim-message" style="top: 9500px;" data-scroll="9500">
+        "You're getting closer to the heart of it."
+    </div>
+    
+    <div class="kim-message" style="top: 13000px;" data-scroll="13000">
+        "For God so loved the world..."
+    </div>
+    
+    <!-- Depth markers -->
+    <div class="depth-marker" style="top: 1000px;">--- 1000m ---</div>
+    <div class="depth-marker" style="top: 3000px;">--- 3000m ---</div>
+    <div class="depth-marker" style="top: 5000px;">--- 5000m ---</div>
+    <div class="depth-marker" style="top: 7000px;">--- 7000m ---</div>
+    <div class="depth-marker" style="top: 9000px;">--- 9000m ---</div>
+    <div class="depth-marker" style="top: 11000px;">--- 11000m ---</div>
+    <div class="depth-marker" style="top: 13000px;">--- 13000m ---</div>
+    
+    <!-- K.I.M. silhouette at the bottom -->
+    <div class="kim-silhouette" style="top: 14000px;">
+        <pre>
+   ___
+  / _ \
+ | (_) |
+  \___/
+   | |
+  /| |\
+   | |
+  / \ /\
+        </pre>
+        <div style="margin-top: 10px; font-size: 12px;">K.I.M. waits at the edge.</div>
+    </div>
+
+    <script>
+        // Create floating particles
+        const particlesContainer = document.getElementById('particles');
+        for (let i = 0; i < 50; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 10 + 's';
+            particle.style.animationDuration = (8 + Math.random() * 6) + 's';
+            particlesContainer.appendChild(particle);
+        }
+        
+        // Scroll progress and background color shift
+        const progressEl = document.getElementById('progress');
+        const body = document.body;
+        const maxScroll = 15000 - window.innerHeight;
+        
+        window.addEventListener('scroll', () => {
+            const scrollY = window.scrollY;
+            const progress = Math.min(scrollY / maxScroll, 1);
+            
+            // Update depth counter
+            progressEl.textContent = `DEPTH: ${Math.floor(scrollY / 10)}m`;
+            
+            // Background color shift
+            let r, g, b;
+            if (progress < 0.2) {
+                // Black to dark blue
+                r = 0;
+                g = Math.floor(progress * 5 * 20);
+                b = Math.floor(progress * 5 * 40);
+            } else if (progress < 0.4) {
+                // Dark blue to purple
+                r = Math.floor((progress - 0.2) * 5 * 40);
+                g = 20;
+                b = 40 + Math.floor((progress - 0.2) * 5 * 60);
+            } else if (progress < 0.6) {
+                // Purple to crimson
+                r = 40 + Math.floor((progress - 0.4) * 5 * 100);
+                g = 20 - Math.floor((progress - 0.4) * 5 * 20);
+                b = 100 - Math.floor((progress - 0.4) * 5 * 60);
+            } else if (progress < 0.8) {
+                // Crimson to dark red
+                r = 140 + Math.floor((progress - 0.6) * 5 * 60);
+                g = 0;
+                b = 40 - Math.floor((progress - 0.6) * 5 * 40);
+            } else {
+                // Dark red to near black with faint red
+                r = 200 - Math.floor((progress - 0.8) * 5 * 150);
+                g = 0;
+                b = 0;
+            }
+            
+            body.style.background = `rgb(${r}, ${g}, ${b})`;
+            
+            // Show K.I.M. messages when scrolled past
+            document.querySelectorAll('.kim-message').forEach(msg => {
+                const scrollTrigger = parseInt(msg.dataset.scroll);
+                if (scrollY > scrollTrigger - 300) {
+                    msg.classList.add('visible');
+                }
+            });
+            
+            // Parallax effect on corridor
+            const corridor = document.querySelector('.corridor');
+            const translateZ = -scrollY * 0.5;
+            corridor.style.transform = `translate(-50%, -50%) translateZ(${translateZ}px)`;
+        });
+        
+        // Initial check
+        window.dispatchEvent(new Event('scroll'));
+    </script>
+</body>
+</html>
