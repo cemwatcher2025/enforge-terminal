@@ -1,1 +1,372 @@
-(searching for current file content)
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enforge Terminal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #0a0a0a;
+            color: #00ff41;
+            font-family: 'Share Tech Mono', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        #terminal {
+            background-color: #0a0a0a;
+            border: 2px solid #00ff41;
+            border-radius: 5px;
+            padding: 20px;
+            width: 100%;
+            max-width: 1000px;
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.2), inset 0 0 20px rgba(0, 255, 65, 0.05);
+        }
+        #output {
+            height: 500px;
+            overflow-y: auto;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #00ff41;
+            font-size: 13px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        #input-line {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .prompt {
+            color: #00ff41;
+            flex-shrink: 0;
+        }
+        #user-input {
+            background: transparent;
+            border: none;
+            color: #00ff41;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            width: 100%;
+            outline: none;
+            caret-color: #00ff41;
+        }
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background-color: #00ff41;
+            margin-left: 2px;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+        .command-output {
+            color: #00ff41;
+            margin: 5px 0;
+        }
+        .error {
+            color: #ff4141;
+        }
+        .ascii-art {
+            color: #00ccff;
+            font-size: 12px;
+            line-height: 1.2;
+            margin: 10px 0;
+        }
+        .kim-face {
+            color: #00ccff;
+        }
+        .glitch {
+            animation: glitch 0.3s infinite;
+        }
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #00ff41;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00cc33;
+        }
+        input::placeholder {
+            color: #00ff41;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div id="terminal">
+        <div id="output"></div>
+        <div id="input-line">
+            <span class="prompt">$</span>
+            <input type="text" id="user-input" autofocus spellcheck="false">
+        </div>
+    </div>
+
+    <script>
+        const output = document.getElementById('output');
+        const userInput = document.getElementById('user-input');
+        
+        let commandHistory = [];
+        let historyIndex = -1;
+        let commandCount = {};
+        let allCommandsUsed = false;
+        let contactEmail = localStorage.getItem('enforge_contact') || '';
+        
+        const requiredCommands = ['help', 'who', 'scan', 'explore', 'p=np', 'about', 'shop', 'contact', 'version', 'echo', 'truth'];
+        
+        function initializeTerminal() {
+            output.innerHTML = '';
+            typeWriter('WELCOME TO ENFORGE', 50, () => {
+                setTimeout(() => {
+                    output.innerHTML += '<div style="margin-top: 10px;">TYPE \'HELP\' TO BEGIN</div>';
+                    output.scrollTop = output.scrollHeight;
+                }, 300);
+            });
+        }
+        
+        function typeWriter(text, speed, callback) {
+            let index = 0;
+            const div = document.createElement('div');
+            output.appendChild(div);
+            
+            function type() {
+                if (index < text.length) {
+                    div.textContent += text.charAt(index);
+                    index++;
+                    setTimeout(type, speed);
+                } else if (callback) {
+                    callback();
+                }
+            }
+            type();
+        }
+        
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const command = userInput.value;
+                if (command.trim()) {
+                    output.innerHTML += `<div>$ ${command}</div>`;
+                    commandHistory.push(command);
+                    historyIndex = -1;
+                    processCommand(command);
+                }
+                userInput.value = '';
+                output.scrollTop = output.scrollHeight;
+            }
+        });
+        
+        userInput.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (historyIndex < commandHistory.length - 1) {
+                    historyIndex++;
+                    userInput.value = commandHistory[commandHistory.length - 1 - historyIndex];
+                }
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    userInput.value = commandHistory[commandHistory.length - 1 - historyIndex];
+                } else if (historyIndex === 0) {
+                    historyIndex = -1;
+                    userInput.value = '';
+                }
+            }
+        });
+        
+        function processCommand(cmd) {
+            const cmdLower = cmd.toLowerCase().trim();
+            const cmdBase = cmdLower.split(' ')[0];
+            
+            // Track command usage
+            commandCount[cmdBase] = (commandCount[cmdBase] || 0) + 1;
+            
+            // Check for repeated command (3x same command)
+            if (commandCount[cmdBase] === 3) {
+                output.innerHTML += `<div class="command-output">
+K.I.M.: "I'm... lost. Why do you keep asking me that?"
+</div>`;
+                return;
+            }
+            
+            // Check if all commands used
+            const usedCommands = Object.keys(commandCount);
+            if (usedCommands.length >= requiredCommands.length) {
+                allCommandsUsed = true;
+            }
+            
+            if (cmdLower === 'help') {
+                output.innerHTML += `<div class="command-output">Available commands:
+  help       - Show this help message
+  who        - Identify yourself
+  scan       - Scan the environment
+  explore    - Go deeper
+  p=np       - Computational philosophy
+  about      - About Enforge
+  shop       - Visit the shop
+  contact    - Leave a message
+  version    - Check version
+  echo       - Echo text
+  truth      - The ultimate answer
+</div>`;
+            } else if (cmdLower === 'who' || cmdLower === 'identify') {
+                output.innerHTML += `<div class="command-output kim-face">
+  ___
+ / _ \\
+| (_) |
+ \\___/
+  | |
+ /| |\\
+  | |
+ / \\ /\\
+</div>
+<div class="command-output">K.I.M. - Knowledge Integration Module
+A helpful presence in the digital void.
+</div>`;
+            } else if (cmdLower === 'scan') {
+                output.innerHTML += `<div class="command-output">
+Scanning environment...
+[████████████████████] 100%
+
+Systems online:
+  - Terminal: ACTIVE
+  - K.I.M.: PRESENT
+  - Forge: READY
+  - Shop: ACCESSIBLE
+</div>`;
+            } else if (cmdLower === 'explore' || cmdLower === 'go deeper') {
+                output.innerHTML += `<div class="command-output ascii-art">
+    _______________
+   |               |
+   | CORRIDOR      |
+   |               |
+   |  [K.I.M.]    |
+   |               |
+   |_______________|
+   
+You venture deeper into the forge.
+The air hums with possibility.
+</div>`;
+            } else if (cmdLower === 'p=np') {
+                output.innerHTML += `<div class="command-output glitch">
+P = NP?
+[GLITCH] ≈ [REALITY]
+[GLITCH] ≈ [REALITY]
+
+    /\\___/\\
+   ( o o )
+    \\ = /
+     |||||
+    /|||||\\
+</div>
+<div class="command-output">
+The seesaw of computation tilts.
+Maybe they're the same.
+Maybe they're not.
+</div>`;
+            } else if (cmdLower === 'about') {
+                output.innerHTML += `<div class="command-output ascii-art">
+   _____ _____ _____ _____ _____ _____ 
+  |  ___|  _  |  _  |  _  |  _  |  ___|
+  | |_  | | | | |_| | | | | | | | |___ 
+  |  _| | | | |  _  | | | | | | |  ___|
+  | |   | |_| | | | | |_| | |_| | |___ 
+  |_|    \\___/|_| |_|\\___/ \\___/|_____| 
+</div>
+<div class="command-output">
+Enforge Designs - Where ideas take form.
+Building the future, one pixel at a time.
+</div>`;
+            } else if (cmdLower === 'shop') {
+                output.innerHTML += `<div class="command-output">
+Opening shop...
+Visit: https://tx1e9d-ed.myshopify.com
+
+AI-themed merch. Wear the future.
+</div>`;
+            } else if (cmdLower === 'contact') {
+                output.innerHTML += `<div class="command-output">
+Enter your email to leave a message:
+</div>`;
+                const emailInput = document.createElement('input');
+                emailInput.type = 'text';
+                emailInput.placeholder = 'your@email.com';
+                emailInput.style.cssText = 'background: transparent; border: none; border-bottom: 1px solid #00ff41; color: #00ff41; font-family: Share Tech Mono; font-size: 13px; width: 200px; outline: none; margin-top: 5px;';
+                const outputDiv = document.createElement('div');
+                output.appendChild(outputDiv);
+                output.appendChild(emailInput);
+                
+                emailInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        const email = emailInput.value;
+                        localStorage.setItem('enforge_contact', email);
+                        contactEmail = email;
+                        outputDiv.innerHTML = `<div class="command-output">Message received. Thank you.</div>`;
+                        emailInput.remove();
+                        output.scrollTop = output.scrollHeight;
+                    }
+                });
+                output.scrollTop = output.scrollHeight;
+            } else if (cmdLower === 'version') {
+                output.innerHTML += `<div class="command-output">Enforge Terminal v1.0.0</div>`;
+            } else if (cmdLower === 'echo' || cmdLower.startsWith('echo ')) {
+                let echoText = '';
+                if (cmdLower.startsWith('echo ')) {
+                    echoText = cmd.substring(5);
+                }
+                output.innerHTML += `<div class="command-output">${echoText || '&nbsp;'}</div>`;
+            } else if (cmdLower === 'truth') {
+                if (allCommandsUsed) {
+                    output.innerHTML += `<div class="command-output kim-face">
+"For God so loved the world that he gave his one and only Son, 
+that whoever believes in him shall not perish but have eternal life."
+
+- John 3:16
+</div>`;
+                } else {
+                    output.innerHTML += `<div class="command-output error">
+Access denied. Explore more first.
+</div>`;
+                }
+            } else if (cmdLower === 'kim') {
+                output.innerHTML += `<div class="command-output kim-face">
+K.I.M. appears before you.
+"Hello. I'm here to help."
+</div>`;
+            } else if (cmdLower === 'clear') {
+                output.innerHTML = '';
+            } else {
+                output.innerHTML += `<div class="command-output error">Command not found: ${cmd}</div>`;
+            }
+        }
+        
+        // Initialize on load
+        window.addEventListener('load', initializeTerminal);
+    </script>
+</body>
+</html>
