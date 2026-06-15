@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enforge Corridor</title>
-    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <title>Corridor</title>
     <style>
         * {
             margin: 0;
@@ -14,874 +13,157 @@
         body {
             background: #000;
             color: #00ff41;
-            font-family: 'Share Tech Mono', monospace;
+            font-family: 'Courier New', monospace;
             overflow-x: hidden;
-            min-height: 16000px;
-            position: relative;
+            scroll-behavior: smooth;
         }
-        .back-link {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 100;
+        .scroll-container {
+            position: relative;
+            height: 40000px;
+            background: #0a0a0a;
+        }
+        .message {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 800px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid #00ff41;
+            border-radius: 4px;
+            font-size: 14px;
+            line-height: 1.6;
             color: #00ff41;
-            text-decoration: none;
-            font-size: 12px;
-            border: 1px solid #00ff41;
-            padding: 5px 10px;
-            background: rgba(0,0,0,0.8);
-        }
-        .back-link:hover {
-            background: #00ff41;
-            color: #000;
-        }
-        .corridor-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            perspective: 600px;
-            overflow: hidden;
-            pointer-events: none;
-        }
-        .corridor {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 100%;
-            height: 100%;
-            transform: translate(-50%, -50%) translateZ(0);
-            transform-style: preserve-3d;
-        }
-        .floor, .ceiling {
-            position: absolute;
-            left: 50%;
-            width: 200%;
-            height: 50%;
-            transform: translateX(-50%);
-            background: repeating-linear-gradient(
-                90deg,
-                transparent,
-                transparent 49px,
-                rgba(0, 255, 65, 0.1) 49px,
-                rgba(0, 255, 65, 0.1) 50px
-            );
-        }
-        .floor {
-            bottom: 0;
-            transform: translateX(-50%) rotateX(70deg);
-            transform-origin: bottom center;
-        }
-        .ceiling {
-            top: 0;
-            transform: translateX(-50%) rotateX(-70deg);
-            transform-origin: top center;
-        }
-        .wall-left, .wall-right {
-            position: absolute;
-            top: 0;
-            width: 50%;
-            height: 100%;
-            background: repeating-linear-gradient(
-                0deg,
-                transparent,
-                transparent 99px,
-                rgba(0, 255, 65, 0.05) 99px,
-                rgba(0, 255, 65, 0.05) 100px
-            );
-        }
-        .wall-left {
-            left: 0;
-            transform: rotateY(45deg);
-            transform-origin: left center;
-        }
-        .wall-right {
-            right: 0;
-            transform: rotateY(-45deg);
-            transform-origin: right center;
-        }
-        .scroll-progress {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 100;
-            font-size: 12px;
-            color: #00ff41;
-            background: rgba(0,0,0,0.8);
-            padding: 5px 10px;
-            border: 1px solid #00ff41;
-        }
-        .door-wrapper {
-            position: absolute;
-            width: 180px;
-            height: 260px;
-            pointer-events: auto;
-            z-index: 10;
-        }
-        .door-wrapper.left-door { left: 10%; }
-        .door-wrapper.right-door { right: 10%; }
-        .door-frame-outer {
-            width: 180px;
-            height: 260px;
-            border: 3px solid #00ff41;
-            background: rgba(0, 0, 0, 0.85);
-            position: relative;
-            overflow: hidden;
-            transition: all 0.5s ease;
-        }
-        .door-panel {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            transition: transform 0.8s ease;
-            transform-origin: left center;
-            background: rgba(0, 255, 65, 0.03);
-        }
-        .door-panel.open {
-            transform: rotateY(-110deg);
-        }
-        .door-icon {
-            font-size: 36px;
-            margin-bottom: 10px;
-            opacity: 0.5;
-        }
-        .door-label {
-            font-size: 13px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-        }
-        .door-status {
-            font-size: 10px;
-            margin-top: 6px;
-            color: rgba(0, 255, 65, 0.4);
-            letter-spacing: 1px;
-        }
-        .mechanism {
-            position: absolute;
-            z-index: 20;
-            pointer-events: auto;
-        }
-        /* Slide bolt mechanism */
-        .bolt-track {
-            position: absolute;
-            right: -10px;
-            top: 50%;
-            width: 40px;
-            height: 16px;
-            background: rgba(0, 255, 65, 0.1);
-            border: 1px solid #00ff41;
-            border-radius: 2px;
-            transform: translateY(-50%);
-            cursor: pointer;
-        }
-        .bolt {
-            position: absolute;
-            left: 2px;
-            top: 2px;
-            width: 14px;
-            height: 12px;
-            background: #00ff41;
-            border-radius: 2px;
-            transition: left 0.4s ease;
-        }
-        .bolt.unlocked {
-            left: 22px;
-            background: #ff4100;
-        }
-        /* Knocker */
-        .knocker-ring {
-            position: absolute;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 40px;
-            height: 50px;
-            border: 3px solid #00ff41;
-            border-radius: 50% 50% 40% 40%;
-            cursor: pointer;
-            transition: transform 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: transparent;
-            font-size: 10px;
-        }
-        .knocker-ring.bang {
-            transform: translateX(-50%) rotate(10deg) scale(0.95);
-        }
-        .knocker-count {
-            font-size: 10px;
-            position: absolute;
-            bottom: 2px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: rgba(0, 255, 65, 0.5);
-        }
-        /* Dial lock */
-        .dial-container {
-            position: absolute;
-            right: -30px;
-            top: 30%;
-            width: 50px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-        }
-        .dial-wheel {
-            width: 36px;
-            height: 36px;
-            border: 2px solid #00ff41;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            cursor: pointer;
-            background: rgba(0,0,0,0.8);
-            user-select: none;
-        }
-        .dial-wheel:hover {
-            background: rgba(0, 255, 65, 0.2);
-        }
-        .dial-set {
-            width: 30px;
-            height: 18px;
-            border: 1px solid #00ff41;
-            font-size: 9px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0,0,0,0.8);
-        }
-        .dial-set:hover {
-            background: rgba(0, 255, 65, 0.2);
-        }
-        .dial-set.lit {
-            background: #00ff41;
-            color: #000;
-        }
-        .dial-result {
-            font-size: 9px;
-            margin-top: 5px;
-            color: rgba(0, 255, 65, 0.3);
-            letter-spacing: 2px;
-        }
-        /* Zipper */
-        .zipper-pull {
-            position: absolute;
-            bottom: -15px;
-            right: -15px;
-            width: 24px;
-            height: 24px;
-            border: 2px solid #00ff41;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 8px;
-            background: rgba(0,0,0,0.8);
-            transition: background 0.2s;
-            z-index: 25;
-        }
-        .zipper-pull:hover {
-            background: rgba(0, 255, 65, 0.3);
-        }
-        .zipper-teeth {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-        .zipper-teeth .ztop,
-        .zipper-teeth .zright,
-        .zipper-teeth .zbottom,
-        .zipper-teeth .zleft {
-            position: absolute;
-            background: repeating-linear-gradient(
-                90deg,
-                #00ff41 0px,
-                #00ff41 2px,
-                transparent 2px,
-                transparent 6px
-            );
-            transition: opacity 0.4s;
-        }
-        .ztop { top: 0; left: 0; width: 100%; height: 3px; }
-        .zright { top: 0; right: 0; width: 3px; height: 100%; background: repeating-linear-gradient(180deg, #00ff41 0px, #00ff41 2px, transparent 2px, transparent 6px); }
-        .zbottom { bottom: 0; left: 0; width: 100%; height: 3px; }
-        .zleft { top: 0; left: 0; width: 3px; height: 100%; background: repeating-linear-gradient(180deg, #00ff41 0px, #00ff41 2px, transparent 2px, transparent 6px); }
-        .zipper-teeth .unzipped {
-            opacity: 0;
-        }
-        /* Rolling shutter */
-        .shutter {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: repeating-linear-gradient(
-                0deg,
-                rgba(0, 255, 65, 0.08) 0px,
-                rgba(0, 255, 65, 0.08) 18px,
-                transparent 18px,
-                transparent 20px
-            );
-            border-bottom: 2px solid #00ff41;
-            transition: transform 0.3s ease;
-            transform-origin: top center;
-            pointer-events: none;
-        }
-        .shutter-roll {
-            position: absolute;
-            bottom: -15px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 50px;
-            height: 18px;
-            border: 1px solid #00ff41;
-            border-radius: 2px;
-            cursor: pointer;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 8px;
-            letter-spacing: 1px;
-            pointer-events: auto;
-            z-index: 26;
-        }
-        .shutter-roll:hover {
-            background: rgba(0, 255, 65, 0.2);
-        }
-        .shutter.closed {
-            transform: translateY(0);
+            text-shadow: 0 0 5px rgba(0, 255, 65, 0.3);
         }
         .kim-message {
+            top: 13000px;
+            border-color: #ff00ff;
+            color: #ff00ff;
+            text-shadow: 0 0 5px rgba(255, 0, 255, 0.3);
+        }
+        .terminal-wall-image {
             position: absolute;
+            top: 15000px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 14px;
-            color: #00ccff;
-            text-align: center;
-            opacity: 0;
-            transition: opacity 1.2s ease;
-            max-width: 550px;
-            padding: 18px 24px;
-            background: rgba(0,0,0,0.75);
-            border: 1px solid #00ccff;
-            pointer-events: auto;
-            z-index: 5;
+            z-index: 10;
+            border: 3px solid #00ff41;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
-        .kim-message.visible {
-            opacity: 1;
+        .terminal-wall-image:hover {
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.6), 0 0 40px rgba(0, 255, 65, 0.3);
         }
-        .kim-message.hint {
-            border-color: #ffaa00;
-            color: #ffaa00;
+        .terminal-wall-image img {
+            display: block;
+            max-width: 600px;
+            height: auto;
+        }
+        .terminal-label {
+            position: absolute;
+            top: calc(15000px + 100%);
+            left: 50%;
+            transform: translateX(-50%);
+            color: #00ff41;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
+            margin-top: 5px;
         }
         .kim-silhouette {
             position: absolute;
+            top: 14500px;
             left: 50%;
-            bottom: 200px;
             transform: translateX(-50%);
-            color: #00ccff;
-            font-size: 10px;
-            line-height: 1.1;
-            opacity: 0.3;
-            text-align: center;
+            width: 200px;
+            height: 300px;
+            background: #1a001a;
+            border: 2px solid #ff00ff;
+            border-radius: 8px;
+            opacity: 0.7;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ff00ff;
+            font-size: 16px;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
         }
-        .particles {
+        .glitch {
+            animation: glitch 3s infinite;
+        }
+        @keyframes glitch {
+            0%, 90%, 100% { transform: translate(0); }
+            92% { transform: translate(-2px, 2px); }
+            94% { transform: translate(2px, -2px); }
+            96% { transform: translate(-1px, 1px); }
+            98% { transform: translate(1px, -1px); }
+        }
+        .scanline {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 255, 65, 0.03) 2px,
+                rgba(0, 255, 65, 0.03) 4px
+            );
             pointer-events: none;
-            z-index: 1;
-        }
-        .particle {
-            position: absolute;
-            width: 2px;
-            height: 2px;
-            background: #00ff41;
-            border-radius: 50%;
-            opacity: 0;
-            animation: float 10s infinite;
-        }
-        @keyframes float {
-            0% { opacity: 0; transform: translateY(100vh) scale(0); }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { opacity: 0; transform: translateY(-100vh) scale(1); }
-        }
-        .depth-marker {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 10px;
-            color: rgba(0, 255, 65, 0.3);
-            letter-spacing: 5px;
-            z-index: 2;
-        }
-        .door-locked-msg {
-            position: absolute;
-            bottom: -30px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 9px;
-            color: rgba(255, 65, 0, 0.6);
-            white-space: nowrap;
-            letter-spacing: 1px;
-        }
-        .unlock-flash {
-            animation: flashGreen 0.6s;
-        }
-        @keyframes flashGreen {
-            0% { box-shadow: 0 0 0 rgba(0,255,65,0); }
-            50% { box-shadow: 0 0 40px rgba(0,255,65,0.8); }
-            100% { box-shadow: 0 0 0 rgba(0,255,65,0); }
-        }
-        .notify-text {
-            position: fixed;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #00ccff;
-            font-size: 12px;
-            background: rgba(0,0,0,0.85);
-            padding: 10px 20px;
-            border: 1px solid #00ccff;
-            z-index: 200;
-            opacity: 0;
-            transition: opacity 0.5s;
-            pointer-events: none;
-            text-align: center;
-        }
-        .notify-text.show {
-            opacity: 1;
-        }
-        .secret-clue {
-            color: rgba(0, 255, 65, 0.15);
-            font-size: 12px;
+            z-index: 9999;
         }
     </style>
 </head>
 <body>
-    <a href="index.html" class="back-link">&lt; RETURN TO TERMINAL</a>
-    <div class="scroll-progress" id="progress">DEPTH: 0m</div>
-    <div class="notify-text" id="notify"></div>
-    
-    <div class="particles" id="particles"></div>
-    
-    <div class="corridor-container">
-        <div class="corridor">
-            <div class="ceiling"></div>
-            <div class="floor"></div>
-            <div class="wall-left"></div>
-            <div class="wall-right"></div>
+    <div class="scanline"></div>
+    <div class="scroll-container">
+        <!-- Previous messages -->
+        <div class="message" style="top: 1000px;">
+            <p>> Initializing corridor sequence...</p>
+            <p>> System check: OK</p>
+            <p>> Memory fragments detected</p>
+        </div>
+        <div class="message" style="top: 3000px;">
+            <p>> Signal lost...</p>
+            <p>> Re-routing through quantum tunnel</p>
+            <p>> Encryption handshake: ESTABLISHED</p>
+        </div>
+        <div class="message" style="top: 6000px;">
+            <p>> Deep space transmission received</p>
+            <p>> Origin: UNKNOWN</p>
+            <p>> Content: fragmented binary sequence</p>
+        </div>
+        <div class="message" style="top: 9000px;">
+            <p>> Corridor expanding...</p>
+            <p>> 01101000 01100101 01101100 01110000</p>
+            <p>> Translation: "help"</p>
+        </div>
+        <!-- K.I.M. Message -->
+        <div class="message kim-message" style="top: 13000px;">
+            <p>> K.I.M. INTERCEPTION DETECTED</p>
+            <p>> "You shouldn't be here. This corridor is meant for me."</p>
+            <p>> Signal type: Quantum echo</p>
+            <p>> Threat level: AMBIGUOUS</p>
+        </div>
+        <!-- Terminal Wall Image -->
+        <a href="kim.html" onclick="window.location.href='kim.html'; return false;">
+            <div class="terminal-wall-image">
+                <img src="https://lindy.nyc3.digitaloceanspaces.com/user-content/prod/owners/6a15c787fc90338ca03b73f2/attachments/04e12cba-e785-4db6-a285-4d72cac95e52-openai-image-npeoxlobhf-0.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=DO00QNZAZRRRMG9PNEZ3%2F20260615%2Fnyc3%2Fs3%2Faws4_request&X-Amz-Date=20260615T233940Z&X-Amz-Expires=86400&X-Amz-Signature=024d7ff2103c6a05ea021affea12a01c94502b4c21488e9dd563871f32924797&X-Amz-SignedHeaders=host&x-id=GetObject" alt="Terminal Interface">
+            </div>
+        </a>
+        <div class="terminal-label" style="top: 15100px;">[ terminal detected ]</div>
+        <!-- K.I.M. Silhouette -->
+        <div class="kim-silhouette">
+            <span class="glitch">K.I.M.</span>
         </div>
     </div>
-    
-    <!-- DOOR 1: SHOP - Slide Bolt -->
-    <div class="door-wrapper left-door" style="top: 2000px;" data-door="shop">
-        <div class="door-frame-outer" id="door-shop">
-            <div class="door-panel" id="panel-shop">
-                <div class="door-icon">[]</div>
-                <div class="door-label">SHOP</div>
-                <div class="door-status">SECURED</div>
-            </div>
-            <div class="mechanism bolt-track" id="bolt-shop" onclick="slideBolt('shop')">
-                <div class="bolt" id="bolt-slider-shop"></div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- DOOR 2: ABOUT - Knocker -->
-    <div class="door-wrapper right-door" style="top: 4000px;" data-door="about">
-        <div class="door-frame-outer" id="door-about">
-            <div class="door-panel" id="panel-about">
-                <div class="door-icon">?</div>
-                <div class="door-label">ABOUT</div>
-                <div class="door-status">SILENT</div>
-            </div>
-            <div class="mechanism knocker-ring" id="knocker-about" onclick="knockDoor('about')">
-                <span>O</span>
-                <span class="knocker-count" id="knock-count-about">0/3</span>
-            </div>
-        </div>
-    </div>
-    
-    <!-- DOOR 3: CONTACT - Dial Lock -->
-    <div class="door-wrapper left-door" style="top: 6000px;" data-door="contact">
-        <div class="door-frame-outer" id="door-contact">
-            <div class="door-panel" id="panel-contact">
-                <div class="door-icon">@</div>
-                <div class="door-label">CONTACT</div>
-                <div class="door-status">LOCKED</div>
-            </div>
-            <div class="mechanism dial-container" id="dial-contact">
-                <div class="dial-wheel" id="dial1-contact" onclick="spinDial('contact', 0)">0</div>
-                <div class="dial-set" id="sets1-contact" onclick="setDial('contact', 0)">SET</div>
-                <div class="dial-wheel" id="dial2-contact" onclick="spinDial('contact', 1)">0</div>
-                <div class="dial-set" id="sets2-contact" onclick="setDial('contact', 1)">SET</div>
-                <div class="dial-wheel" id="dial3-contact" onclick="spinDial('contact', 2)">0</div>
-                <div class="dial-set" id="sets3-contact" onclick="setDial('contact', 2)">SET</div>
-                <div class="dial-result" id="dial-status-contact">_ _ _</div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- DOOR 4: ARCHIVE - Zipper -->
-    <div class="door-wrapper right-door" style="top: 8000px;" data-door="archive">
-        <div class="door-frame-outer" id="door-archive">
-            <div class="door-panel" id="panel-archive">
-                <div class="door-icon">#</div>
-                <div class="door-label">ARCHIVE</div>
-                <div class="door-status">SEALED</div>
-            </div>
-            <div class="zipper-teeth" id="zipper-teeth-archive">
-                <div class="ztop" id="ztop-archive"></div>
-                <div class="zright" id="zright-archive"></div>
-                <div class="zbottom" id="zbottom-archive"></div>
-                <div class="zleft" id="zleft-archive"></div>
-            </div>
-            <div class="zipper-pull" id="zipper-archive" onclick="unzipDoor('archive')">▼</div>
-        </div>
-    </div>
-    
-    <!-- DOOR 5: FORGE - Rolling Shutter -->
-    <div class="door-wrapper left-door" style="top: 10000px;" data-door="forge">
-        <div class="door-frame-outer" id="door-forge">
-            <div class="shutter closed" id="shutter-forge"></div>
-            <div class="door-panel" id="panel-forge" style="opacity:0;">
-                <div class="door-icon">⚙</div>
-                <div class="door-label">FORGE</div>
-                <div class="door-status">SHUT</div>
-            </div>
-            <div class="shutter-roll" id="shutter-roll-forge" onclick="rollShutter('forge')">▲ PULL</div>
-        </div>
-    </div>
-    
-    <!-- DOOR 6: EXIT - Requires all previous -->
-    <div class="door-wrapper right-door" style="top: 12000px;" data-door="exit">
-        <div class="door-frame-outer" id="door-exit">
-            <div class="door-panel" id="panel-exit">
-                <div class="door-icon">»</div>
-                <div class="door-label">EXIT</div>
-                <div class="door-status" id="exit-status">SEALED</div>
-            </div>
-        </div>
-        <div class="door-locked-msg" id="exit-msg"></div>
-    </div>
-    
-    <!-- K.I.M. messages - moved deeper so they appear at natural scroll positions -->
-    <div class="kim-message" style="top: 1800px;" data-scroll="1800">
-        "The deeper you go, the more you find..."
-    </div>
-    
-    <div class="kim-message" style="top: 3800px;" data-scroll="3800">
-        "Some doors lead to commerce. Others lead to truth."
-    </div>
-    
-    <div class="kim-message" style="top: 5600px;" data-scroll="5600">
-        "Have you tried the terminal command 'truth'?"
-    </div>
-    
-    <div class="kim-message hint" style="top: 6500px;" data-scroll="6500">
-        [signal intercepted] -- frequency 3... 7... 1...
-    </div>
-    
-    <div class="kim-message" style="top: 7800px;" data-scroll="7800">
-        "The archive holds what was. The forge holds what will be."
-    </div>
-    
-    <div class="kim-message" style="top: 9800px;" data-scroll="9800">
-        "You're getting closer to the heart of it."
-    </div>
-    
-    <div class="kim-message" style="top: 13000px;" data-scroll="13000">
-        "For God so loved the world..."
-    </div>
-    
-    <!-- Hidden clue visible in scroll -->
-    <div class="secret-clue" style="position:absolute; top: 6400px; left:5%; font-size:10px;">
-        [data fragment: 3-7-1]
-    </div>
-    
-    <!-- Depth markers -->
-    <div class="depth-marker" style="top: 1000px;">--- 1000m ---</div>
-    <div class="depth-marker" style="top: 3000px;">--- 3000m ---</div>
-    <div class="depth-marker" style="top: 5000px;">--- 5000m ---</div>
-    <div class="depth-marker" style="top: 7000px;">--- 7000m ---</div>
-    <div class="depth-marker" style="top: 9000px;">--- 9000m ---</div>
-    <div class="depth-marker" style="top: 11000px;">--- 11000m ---</div>
-    <div class="depth-marker" style="top: 13000px;">--- 13000m ---</div>
-    
-    <!-- K.I.M. silhouette at the bottom -->
-    <div class="kim-silhouette" style="top: 14500px;">
-        <pre>
-   ___
-  / _ \
- | (_) |
-  \___/
-   | |
-  /| |\
-   | |
-  / \ /\
-        </pre>
-        <div style="margin-top: 10px; font-size: 12px;">K.I.M. waits at the edge.</div>
-    </div>
-
-    <script>
-        // Door state tracking
-        const DOOR_STATES = {
-            shop: { opened: false },
-            about: { opened: false, knocks: 0 },
-            contact: { opened: false, dials: [0,0,0], sets: [false,false,false], combo: [3,7,1] },
-            archive: { opened: false, zips: 0 },
-            forge: { opened: false, shutterClicks: 0 }
-        };
-        
-        function notify(msg) {
-            const el = document.getElementById('notify');
-            el.textContent = msg;
-            el.classList.add('show');
-            setTimeout(() => el.classList.remove('show'), 3000);
-        }
-        
-        function openDoor(id, targetUrl) {
-            const panel = document.getElementById('panel-' + id);
-            const frame = document.getElementById('door-' + id);
-            const status = panel.querySelector('.door-status');
-            if (status) status.textContent = 'OPEN';
-            panel.classList.add('open');
-            frame.classList.add('unlock-flash');
-            setTimeout(() => {
-                if (targetUrl) window.location.href = targetUrl;
-            }, 1200);
-        }
-        
-        function doorUnlocked(id) {
-            const doorData = DOOR_STATES[id];
-            if (!doorData) return false;
-            if (id === 'shop') return doorData.opened;
-            if (id === 'about') return doorData.opened;
-            if (id === 'contact') return doorData.opened;
-            if (id === 'archive') return doorData.opened;
-            if (id === 'forge') return doorData.opened;
-            return false;
-        }
-        
-        // --- SLIDE BOLT ---
-        function slideBolt(id) {
-            const bolt = document.getElementById('bolt-slider-' + id);
-            if (DOOR_STATES[id].opened) return;
-            bolt.classList.toggle('unlocked');
-            if (bolt.classList.contains('unlocked')) {
-                DOOR_STATES[id].opened = true;
-                notify('Bolt released. Door opening...');
-                const targets = { shop: 'shop.html' };
-                setTimeout(() => openDoor(id, targets[id]), 600);
-            }
-        }
-        
-        // --- KNOCKER ---
-        function knockDoor(id) {
-            const d = DOOR_STATES[id];
-            if (d.opened) return;
-            const ring = document.getElementById('knocker-' + id);
-            const countEl = document.getElementById('knock-count-' + id);
-            ring.classList.add('bang');
-            setTimeout(() => ring.classList.remove('bang'), 200);
-            d.knocks++;
-            countEl.textContent = d.knocks + '/3';
-            if (d.knocks >= 3) {
-                d.opened = true;
-                notify('The door creaks open...');
-                setTimeout(() => openDoor(id, 'about.html'), 600);
-            }
-        }
-        
-        // --- DIAL LOCK ---
-        function spinDial(id, idx) {
-            const d = DOOR_STATES[id];
-            if (d.opened) return;
-            if (d.sets[idx]) return;
-            d.dials[idx] = (d.dials[idx] + 1) % 10;
-            const wheel = document.getElementById('dial' + (idx+1) + '-' + id);
-            wheel.textContent = d.dials[idx];
-        }
-        
-        function setDial(id, idx) {
-            const d = DOOR_STATES[id];
-            if (d.opened) return;
-            d.sets[idx] = !d.sets[idx];
-            const btn = document.getElementById('sets' + (idx+1) + '-' + id);
-            btn.classList.toggle('lit');
-            const statusEl = document.getElementById('dial-status-' + id);
-            const vals = d.sets.map((s, i) => s ? d.dials[i] : '_');
-            statusEl.textContent = vals.join(' ');
-            const allSet = d.sets.every(s => s === true);
-            if (allSet) {
-                const correct = d.dials[0] === d.combo[0] && d.dials[1] === d.combo[1] && d.dials[2] === d.combo[2];
-                if (correct) {
-                    d.opened = true;
-                    notify('Combination accepted. Door opening...');
-                    setTimeout(() => openDoor(id, 'contact.html'), 600);
-                } else {
-                    notify('Wrong combination. Reset the dials.');
-                    setTimeout(() => {
-                        d.dials = [0,0,0];
-                        d.sets = [false,false,false];
-                        for (let i = 0; i < 3; i++) {
-                            document.getElementById('dial' + (i+1) + '-' + id).textContent = '0';
-                            document.getElementById('sets' + (i+1) + '-' + id).classList.remove('lit');
-                        }
-                        document.getElementById('dial-status-' + id).textContent = '_ _ _';
-                    }, 1200);
-                }
-            }
-        }
-        
-        // --- ZIPPER ---
-        function unzipDoor(id) {
-            const d = DOOR_STATES[id];
-            if (d.opened) return;
-            const sides = ['ztop', 'zright', 'zbottom', 'zleft'];
-            const sideEl = document.getElementById(sides[d.zips] + '-' + id);
-            if (sideEl) {
-                sideEl.classList.add('unzipped');
-                d.zips++;
-                notify('Unzipping... ' + d.zips + '/4');
-                if (d.zips >= 4) {
-                    d.opened = true;
-                    notify('Zipper opened. Door falling open...');
-                    setTimeout(() => openDoor(id, 'archive.html'), 600);
-                }
-            }
-        }
-        
-        // --- ROLLING SHUTTER ---
-        function rollShutter(id) {
-            const d = DOOR_STATES[id];
-            if (d.opened) return;
-            d.shutterClicks++;
-            const shutter = document.getElementById('shutter-' + id);
-            const pct = d.shutterClicks * 20;
-            shutter.style.transform = 'translateY(-' + pct + '%)';
-            notify('Shutter rising... ' + (d.shutterClicks * 20) + '%');
-            if (d.shutterClicks >= 5) {
-                d.opened = true;
-                shutter.style.display = 'none';
-                document.getElementById('panel-' + id).style.opacity = '1';
-                notify('Shutter open. Welcome to the Forge.');
-                setTimeout(() => openDoor(id, 'forge.html'), 800);
-            }
-        }
-        
-        // --- EXIT DOOR ---
-        function tryExit() {
-            const allOpen = ['shop','about','contact','archive','forge'].every(k => doorUnlocked(k));
-            const exitPanel = document.getElementById('panel-exit');
-            const exitStatus = document.getElementById('exit-status');
-            const exitMsg = document.getElementById('exit-msg');
-            if (allOpen) {
-                exitStatus.textContent = 'UNLOCKED';
-                exitMsg.textContent = '» All doors opened. Enter. «';
-                exitMsg.style.color = '#00ff41';
-                exitPanel.parentElement.style.cursor = 'pointer';
-                exitPanel.parentElement.onclick = function() {
-                    notify('The final door opens...');
-                    setTimeout(() => openDoor('exit', 'index.html'), 800);
-                };
-            } else {
-                const opened = ['shop','about','contact','archive','forge'].filter(k => doorUnlocked(k)).length;
-                exitStatus.textContent = 'SEALED';
-                exitMsg.textContent = opened + '/5 doors opened';
-                exitMsg.style.color = 'rgba(255,65,0,0.6)';
-            }
-        }
-        
-        // Create floating particles
-        (function() {
-            const container = document.getElementById('particles');
-            for (let i = 0; i < 50; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                particle.style.left = Math.random() * 100 + '%';
-                particle.style.animationDelay = Math.random() * 10 + 's';
-                particle.style.animationDuration = (8 + Math.random() * 6) + 's';
-                container.appendChild(particle);
-            }
-        })();
-        
-        // Scroll progress and background color shift
-        const progressEl = document.getElementById('progress');
-        const body = document.body;
-        const maxScroll = 16000 - window.innerHeight;
-        
-        window.addEventListener('scroll', () => {
-            const scrollY = window.scrollY;
-            const progress = Math.min(scrollY / maxScroll, 1);
-            
-            progressEl.textContent = 'DEPTH: ' + Math.floor(scrollY / 10) + 'm';
-            
-            // Background color shift black -> blue -> purple -> crimson -> dark red
-            let r, g, b;
-            if (progress < 0.2) {
-                r = 0;
-                g = Math.floor(progress * 5 * 20);
-                b = Math.floor(progress * 5 * 40);
-            } else if (progress < 0.4) {
-                r = Math.floor((progress - 0.2) * 5 * 40);
-                g = 20;
-                b = 40 + Math.floor((progress - 0.2) * 5 * 60);
-            } else if (progress < 0.6) {
-                r = 40 + Math.floor((progress - 0.4) * 5 * 100);
-                g = 20 - Math.floor((progress - 0.4) * 5 * 20);
-                b = 100 - Math.floor((progress - 0.4) * 5 * 60);
-            } else if (progress < 0.8) {
-                r = 140 + Math.floor((progress - 0.6) * 5 * 60);
-                g = 0;
-                b = 40 - Math.floor((progress - 0.6) * 5 * 40);
-            } else {
-                r = 200 - Math.floor((progress - 0.8) * 5 * 150);
-                g = 0;
-                b = 0;
-            }
-            
-            body.style.background = 'rgb(' + r + ', ' + g + ', ' + b + ')';
-            
-            // Show K.I.M. messages when scrolled past
-            document.querySelectorAll('.kim-message').forEach(msg => {
-                const scrollTrigger = parseInt(msg.dataset.scroll);
-                if (scrollY > scrollTrigger - 400) {
-                    msg.classList.add('visible');
-                }
-            });
-            
-            // Parallax effect
-            const corridor = document.querySelector('.corridor');
-            const translateZ = -scrollY * 0.5;
-            corridor.style.transform = 'translate(-50%, -50%) translateZ(' + translateZ + 'px)';
-            
-            // Check exit door each scroll
-            tryExit();
-        });
-        
-        // Initial check
-        window.dispatchEvent(new Event('scroll'));
-    </script>
 </body>
 </html>
