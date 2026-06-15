@@ -1,761 +1,694 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ENFORGE TERMINAL</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ENFORGE TERMINAL</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-        body {
-            background: #000;
-            color: #00ff41;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 16px;
-            line-height: 1.5;
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
+body {
+  background: #000;
+  color: #00ff41;
+  font-family: 'Share Tech Mono', monospace;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-        #terminal {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-        }
+#terminal {
+  background: #000;
+  width: 100%;
+  max-width: 900px;
+  min-height: 85vh;
+  padding: 30px 40px;
+  border: 1px solid #0a3b0a;
+  box-shadow: 0 0 20px rgba(0, 255, 65, 0.06);
+  overflow-y: auto;
+  position: relative;
+}
 
-        #output {
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            overflow-y: auto;
-            max-height: calc(100vh - 100px);
-        }
+#output {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.5;
+  font-size: 16px;
+  min-height: 70vh;
+}
 
-        #output .line {
-            margin-bottom: 2px;
-        }
+.cursor {
+  display: inline-block;
+  width: 10px;
+  height: 18px;
+  background: #00ff41;
+  animation: blink 0.7s step-end infinite;
+  vertical-align: text-bottom;
+  margin-left: 2px;
+}
 
-        #input-line {
-            display: flex;
-            align-items: center;
-            padding: 10px 20px;
-            border-top: 1px solid #00ff4133;
-            background: #000;
-            position: sticky;
-            bottom: 0;
-        }
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
 
-        #prompt {
-            color: #00ff41;
-            margin-right: 10px;
-            user-select: none;
-        }
+.prompt-line {
+  display: flex;
+  align-items: center;
+  margin-top: 5px;
+}
 
-        #command-input {
-            background: transparent;
-            border: none;
-            color: #00ff41;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 16px;
-            outline: none;
-            flex: 1;
-            caret-color: #00ff41;
-        }
+.prompt {
+  color: #00ff41;
+  font-size: 16px;
+  white-space: pre;
+}
 
-        #command-input::placeholder {
-            color: #00ff4144;
-        }
+#input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #00ff41;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 16px;
+  flex: 1;
+  caret-color: #00ff41;
+  margin-left: 4px;
+}
 
-        .cursor {
-            display: inline-block;
-            width: 10px;
-            height: 18px;
-            background: #00ff41;
-            animation: blink 1s step-end infinite;
-            vertical-align: text-bottom;
-            margin-left: 2px;
-        }
+#input:focus {
+  outline: none;
+}
 
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
-        }
+.input-line {
+  display: flex;
+  align-items: center;
+}
 
-        .glitch {
-            animation: glitch 0.05s infinite;
-        }
+.hidden-input {
+  position: absolute;
+  left: -9999px;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
 
-        @keyframes glitch {
-            0% { transform: translate(0); }
-            20% { transform: translate(-2px, 1px); }
-            40% { transform: translate(2px, -1px); }
-            60% { transform: translate(-1px, -2px); }
-            80% { transform: translate(1px, 2px); }
-            100% { transform: translate(0); }
-        }
+.glitch-char {
+  display: inline-block;
+  animation: glitch 0.05s infinite;
+}
 
-        .message-input {
-            background: transparent;
-            border: 1px solid #00ff41;
-            color: #00ff41;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 16px;
-            padding: 5px 10px;
-            outline: none;
-            width: 300px;
-            margin-top: 5px;
-        }
+@keyframes glitch {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+  100% { opacity: 1; }
+}
 
-        .message-input:focus {
-            border-color: #00ff41;
-        }
+.ascii-art {
+  color: #00ff41;
+  line-height: 1.2;
+  font-size: 14px;
+}
 
-        .link {
-            color: #00ff41;
-            text-decoration: underline;
-            cursor: pointer;
-        }
+.highlight {
+  color: #00cc33;
+}
 
-        .link:hover {
-            color: #fff;
-        }
+.dim {
+  color: #006b1a;
+}
 
-        /* Scrollbar styling */
-        #output::-webkit-scrollbar {
-            width: 5px;
-        }
+.scan-line {
+  margin: 4px 0;
+}
 
-        #output::-webkit-scrollbar-track {
-            background: #000;
-        }
+.kim-face {
+  line-height: 1.2;
+  margin: 10px 0;
+  color: #00ff41;
+}
 
-        #output::-webkit-scrollbar-thumb {
-            background: #00ff4133;
-        }
+::-webkit-scrollbar {
+  width: 6px;
+}
 
-        #output::-webkit-scrollbar-thumb:hover {
-            background: #00ff4166;
-        }
+::-webkit-scrollbar-track {
+  background: #000;
+}
 
-        #terminal::-webkit-scrollbar {
-            width: 5px;
-        }
+::-webkit-scrollbar-thumb {
+  background: #0a3b0a;
+  border-radius: 3px;
+}
 
-        #terminal::-webkit-scrollbar-track {
-            background: #000;
-        }
-
-        #terminal::-webkit-scrollbar-thumb {
-            background: #00ff4133;
-        }
-
-        #terminal::-webkit-scrollbar-thumb:hover {
-            background: #00ff4166;
-        }
-    </style>
+@media (max-width: 600px) {
+  #terminal {
+    padding: 15px 20px;
+    min-height: 90vh;
+  }
+  #output {
+    font-size: 14px;
+  }
+  .prompt, #input {
+    font-size: 14px;
+  }
+}
+</style>
 </head>
 <body>
-    <div id="terminal">
-        <div id="output"></div>
-        <div id="input-line">
-            <span id="prompt">></span>
-            <input type="text" id="command-input" autofocus placeholder="Type a command...">
-        </div>
+
+<div id="terminal">
+  <div id="output"></div>
+  <div id="input-area" style="display:none;">
+    <div class="input-line">
+      <span class="prompt">$ </span>
+      <input type="text" id="input" autofocus autocomplete="off" spellcheck="false">
     </div>
+  </div>
+  <input type="text" class="hidden-input" id="hidden-input" autocomplete="off" spellcheck="false">
+</div>
 
-    <script>
-        (function() {
-            const output = document.getElementById('output');
-            const input = document.getElementById('command-input');
-            const terminal = document.getElementById('terminal');
+<script>
+(function() {
+  const output = document.getElementById('output');
+  const inputArea = document.getElementById('input-area');
+  const input = document.getElementById('input');
+  const hiddenInput = document.getElementById('hidden-input');
 
-            // State
-            let kimFaceVisible = false;
-            let helpCount = 0;
-            let commandHistory = [];
-            let lastCommand = '';
-            let sameCommandCount = 0;
-            let executedCommands = new Set();
-            let contactMode = false;
-            let typingComplete = false;
-            let currentInput = '';
+  let history = [];
+  let historyIndex = -1;
+  let typingComplete = false;
+  let commandsUsed = {};
+  let totalHelpCount = 0;
+  let allCommandsExplored = false;
+  let truthUnlocked = false;
+  let contactMode = false;
+  let contactCallback = null;
 
-            const commands = ['help', 'who', 'identify', 'p=np', 'shop', 'explore', 'go deeper', 'scan', 'clear', 'about', 'contact', 'truth', 'version', 'kim', 'k.i.m.'];
+  const COMMANDS = [
+    'help', 'who', 'identify', 'scan', 'explore', 'go deeper',
+    'p=np', 'about', 'shop', 'contact', 'clear', 'version', 'truth',
+    'kim', 'k.i.m.'
+  ];
 
-            const KIM_FACE = `
-        ┌─────────────────────┐
-        │   ╭─────────────────╮   │
-        │   │  ┌───────────┐  │   │
-        │   │  │  ╱───╲     │  │   │
-        │   │  │ │ ●   ● │  │  │   │
-        │   │  │  ╲───╱    │  │   │
-        │   │  │   ─────   │  │   │
-        │   │  │  ╱     ╲  │  │   │
-        │   │  │ │  ───  │ │  │   │
-        │   │  │  ╲     ╱  │  │   │
-        │   │  │   ─────   │  │   │
-        │   │  └───────────┘  │   │
-        │   ╰─────────────────╯   │
-        └─────────────────────┘
-            K.I.M. // Knowledge Integration Module // I see you.`;
+  const commandInfo = {
+    help: 'Lists all available commands.',
+    who: 'Identifies the system interface.',
+    identify: 'Identifies the system interface.',
+    scan: 'Scans the environment for details.',
+    explore: 'Explore deeper into the system.',
+    'go deeper': 'Explore deeper into the system.',
+    'p=np': 'Engages theoretical computation module.',
+    about: 'About Enforge Designs.',
+    shop: 'Opens the Enforge shop.',
+    contact: 'Send a message to Enforge.',
+    clear: 'Clears the terminal.',
+    version: 'Shows terminal version.',
+    truth: '???'
+  };
 
-            const SEESAW_ART = `
-          ╱───╲              ╱───╲
-         ╱     ╲            ╱     ╲
-        ╱       ╲          ╱       ╲
-       ╱         ╲        ╱         ╲
-      ╱           ╲      ╱           ╲
-     ╱             ╲    ╱             ╲
-    ╱               ╲  ╱               ╲
-   ╱                 ╲╱                 ╲
-  ╱                  ───────────────────  ╲
- ╱                        │               ╲
-╱                         │                ╲`;
+  function typeText(text, callback, speed = 40) {
+    let i = 0;
+    const span = document.createElement('span');
+    output.appendChild(span);
 
-            const CORRIDOR_ART = `
-    ╔══════════════════════════════════╗
-    ║  ╔══╗                      ╔══╗  ║
-    ║  ║  ║                      ║  ║  ║
-    ║  ║  ║                      ║  ║  ║
-    ║  ║  ║   ╔══════════════╗   ║  ║  ║
-    ║  ║  ║   ║              ║   ║  ║  ║
-    ║  ║  ║   ║              ║   ║  ║  ║
-    ║  ║  ║   ║              ║   ║  ║  ║
-    ║  ║  ║   ╚══════════════╝   ║  ║  ║
-    ║  ║  ║                      ║  ║  ║
-    ║  ║  ║                      ║  ║  ║
-    ║  ╚══╝                      ╚══╝  ║
-    ╚══════════════════════════════════╝`;
+    function type() {
+      if (i < text.length) {
+        span.textContent += text[i];
+        i++;
+        setTimeout(type, speed);
+      } else {
+        if (callback) callback();
+      }
+    }
+    type();
+  }
 
-            const FORGE_SYMBOL = `
-          ╔═══╗
-         ╔╝   ╚╗
-        ╔╝     ╚╗
-        ║  ╔═╗  ║
-        ║  ╚═╝  ║
-        ╚╗     ╔╝
-         ╚╗   ╔╝
-          ╚═══╝`;
+  function typeWithCursor(text, callback, speed = 40) {
+    let i = 0;
+    const span = document.createElement('span');
+    const cursorSpan = document.createElement('span');
+    cursorSpan.className = 'cursor';
+    output.appendChild(span);
+    output.appendChild(cursorSpan);
 
-            const GEAR_SYMBOL = `
-         ╭─────╮
-        ╱  ╭─╮  ╲
-       │  ╱   ╲  │
-       │ │     │ │
-       │  ╲   ╱  │
-        ╲  ╰─╯  ╱
-         ╰─────╯`;
+    function type() {
+      if (i < text.length) {
+        span.textContent += text[i];
+        i++;
+        setTimeout(type, speed);
+      } else {
+        output.removeChild(cursorSpan);
+        if (callback) callback();
+      }
+    }
+    type();
+  }
 
-            // Typewriter effect for welcome message
-            function typeWelcome() {
-                const welcomeText = "WELCOME TO ENFORGE\nTYPE 'HELP' TO BEGIN";
-                const outputDiv = document.getElementById('output');
-                let charIndex = 0;
-                let currentLine = '';
-                let lines = ['', ''];
+  function addLine(text, className = '') {
+    const div = document.createElement('div');
+    div.textContent = text;
+    if (className) div.className = className;
+    output.appendChild(div);
+  }
 
-                function typeChar() {
-                    if (charIndex < welcomeText.length) {
-                        const char = welcomeText[charIndex];
-                        if (char === '\n') {
-                            lines[0] = currentLine;
-                            currentLine = '';
-                            lines[1] = '';
-                        } else {
-                            currentLine += char;
-                            if (lines[1] !== undefined) {
-                                lines[1] = currentLine;
-                            } else {
-                                lines[0] = currentLine;
-                            }
-                        }
-                        // Clear and rewrite
-                        outputDiv.innerHTML = '';
-                        if (lines[0]) {
-                            const line1 = document.createElement('div');
-                            line1.className = 'line';
-                            line1.textContent = lines[0];
-                            outputDiv.appendChild(line1);
-                        }
-                        if (lines[1] !== undefined && lines[1] !== '' && charIndex >= welcomeText.indexOf('\n')) {
-                            const line2 = document.createElement('div');
-                            line2.className = 'line';
-                            line2.textContent = lines[1];
-                            outputDiv.appendChild(line2);
-                        }
-                        // Show blinking cursor
-                        const cursorSpan = document.createElement('span');
-                        cursorSpan.className = 'cursor';
-                        outputDiv.appendChild(cursorSpan);
+  function addHTML(html) {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    output.appendChild(div);
+  }
 
-                        charIndex++;
-                        setTimeout(typeChar, 80);
-                    } else {
-                        // Final state - show cursor at end
-                        outputDiv.innerHTML = '';
-                        const line1 = document.createElement('div');
-                        line1.className = 'line';
-                        line1.textContent = "WELCOME TO ENFORGE";
-                        outputDiv.appendChild(line1);
-                        const line2 = document.createElement('div');
-                        line2.className = 'line';
-                        line2.textContent = "TYPE 'HELP' TO BEGIN";
-                        outputDiv.appendChild(line2);
-                        const cursorSpan = document.createElement('span');
-                        cursorSpan.className = 'cursor';
-                        outputDiv.appendChild(cursorSpan);
-                        typingComplete = true;
-                        input.disabled = false;
-                        input.focus();
-                    }
-                }
+  function scrollBottom() {
+    const terminal = document.getElementById('terminal');
+    terminal.scrollTop = terminal.scrollHeight;
+  }
 
-                typeChar();
+  function showPrompt() {
+    inputArea.style.display = 'flex';
+    setTimeout(() => {
+      input.focus();
+      scrollBottom();
+    }, 50);
+  }
+
+  function hidePrompt() {
+    inputArea.style.display = 'none';
+  }
+
+  function getNormalizedCommand(cmd) {
+    const lower = cmd.toLowerCase().trim();
+    if (lower === 'who' || lower === 'identify') return 'who';
+    if (lower === 'explore' || lower === 'go deeper') return 'explore';
+    if (lower === 'kim' || lower === 'k.i.m.') return 'kim';
+    return lower;
+  }
+
+  function isHelpCommand(cmd) {
+    const lower = cmd.toLowerCase().trim();
+    return lower === 'help';
+  }
+
+  function trackCommand(cmd) {
+    const key = getNormalizedCommand(cmd);
+    if (!commandsUsed[key]) commandsUsed[key] = 0;
+    commandsUsed[key]++;
+
+    if (key === 'help') {
+      totalHelpCount++;
+    }
+
+    // Check if same command 3x in a row
+    const lastThree = history.slice(-3);
+    if (lastThree.length === 3) {
+      const [a, b, c] = lastThree.map(x => getNormalizedCommand(x));
+      if (a === b && b === c && a !== 'clear') {
+        addLine('');
+        addLine('K.I.M.: You seem lost. Try looking around.');
+        addLine('');
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  function checkAllCommandsExplored() {
+    const required = ['help', 'who', 'scan', 'explore', 'p=np', 'about', 'shop', 'contact', 'version'];
+    const used = Object.keys(commandsUsed);
+    const allExplored = required.every(cmd => used.includes(cmd));
+    if (allExplored && !allCommandsExplored) {
+      allCommandsExplored = true;
+      truthUnlocked = true;
+      addLine('');
+      addLine('System: All interfaces accessed. Hidden path detected.');
+      addLine('Type "truth" to open it.');
+      addLine('');
+    }
+    return allExplored;
+  }
+
+  function processCommand(cmd) {
+    const lower = cmd.toLowerCase().trim();
+    const normalized = getNormalizedCommand(cmd);
+
+    if (!lower) return;
+
+    // Track command
+    history.push(cmd);
+    historyIndex = history.length;
+
+    // Show what was typed
+    addLine('$ ' + cmd);
+
+    // Check for kim mention
+    if (normalized === 'kim') {
+      addLine('');
+      addLine('  ██╗  ██╗██╗███╗   ███╗');
+      addLine('  ██║ ██╔╝██║████╗ ████║');
+      addLine('  █████╔╝ ██║██╔████╔██║');
+      addLine('  ██╔═██╗ ██║██║╚██╔╝██║');
+      addLine('  ██║  ██╗██║██║ ╚═╝ ██║');
+      addLine('  ╚═╝  ╚═╝╚═╝╚═╝     ╚═╝');
+      addLine('');
+      addLine('  ╔══════════════════════════╗');
+      addLine('  ║  [ K . I . M . ]        ║');
+      addLine('  ║  ╔═══╗                  ║');
+      addLine('  ║  ║ • ║ •                ║');
+      addLine('  ║  ╚═╤═╝                  ║');
+      addLine('  ║   ╱│╲                   ║');
+      addLine('  ║  ╱ ╲                    ║');
+      addLine('  ╚══════════════════════════╝');
+      addLine('');
+      addLine('K.I.M.: I\'m here.');
+      addLine('');
+      scrollBottom();
+      return;
+    }
+
+    // Check triple command
+    if (trackCommand(cmd)) {
+      scrollBottom();
+      return;
+    }
+
+    switch (normalized) {
+      case 'help': {
+        addLine('');
+        if (totalHelpCount === 3) {
+          addLine('Some paths reveal themselves to those who persist...');
+          addLine('');
+        }
+        addLine('╔══════════════════════════════════════╗');
+        addLine('║          AVAILABLE COMMANDS          ║');
+        addLine('╠══════════════════════════════════════╣');
+        addLine('║ help      - Show this menu           ║');
+        addLine('║ who       - Identify this system     ║');
+        addLine('║ identify  - Identify this system     ║');
+        addLine('║ scan      - Scan environment         ║');
+        addLine('║ explore   - Go deeper                ║');
+        addLine('║ go deeper - Go deeper                ║');
+        addLine('║ p=np      - Theory module            ║');
+        addLine('║ about     - About Enforge Designs    ║');
+        addLine('║ shop      - Visit the shop           ║');
+        addLine('║ contact   - Send a message           ║');
+        addLine('║ clear     - Clear terminal           ║');
+        addLine('║ version   - Show version info        ║');
+        addLine('╚══════════════════════════════════════╝');
+        addLine('');
+        break;
+      }
+
+      case 'who': {
+        addLine('');
+        addLine('  ╔══════════════════════════╗');
+        addLine('  ║   ╔═══╗                 ║');
+        addLine('  ║   ║ • ║ •               ║');
+        addLine('  ║   ╚═╤═╝                 ║');
+        addLine('  ║    ╱│╲                  ║');
+        addLine('  ║   ╱ ╲                   ║');
+        addLine('  ╚══════════════════════════╝');
+        addLine('');
+        addLine('K.I.M. // Knowledge Integration Module // I see you.');
+        addLine('');
+        break;
+      }
+
+      case 'scan': {
+        addLine('');
+        addLine('Scanning environment...');
+        addLine('');
+        setTimeout(() => {
+          addLine('  Location:         UNKNOWN SECTOR // CLASSIFIED');
+          addLine('  Temperature:      36.6°C // NOMINAL');
+          addLine('  User Status:      DETECTED // MONITORING');
+          addLine('  K.I.M. Proximity: WITHIN RANGE // WATCHING');
+          addLine('');
+          scrollBottom();
+        }, 800);
+        break;
+      }
+
+      case 'explore': {
+        addLine('');
+        addLine('  ═══════════════════════════════════════');
+        addLine('  ░▒▓ CORRIDOR 7-A ▓▒░');
+        addLine('  ═══════════════════════════════════════');
+        addLine('');
+        addLine('  [████████████░░░░░░░░░░░░░░░░░░░░]');
+        addLine('  ▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░');
+        addLine('  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░');
+        addLine('  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░');
+        addLine('  ░░░░░░░░░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓');
+        addLine('  ░░░░░░░░░░░░░░░░░░████████████████');
+        addLine('');
+        addLine('  [Corridor room coming soon]');
+        addLine('');
+        break;
+      }
+
+      case 'p=np': {
+        addLine('');
+        // Glitch animation
+        addLine('Initializing theoretical module...');
+        const glitchLine = document.createElement('div');
+        output.appendChild(glitchLine);
+        const glitchChars = '!@#$%^&*()_+-=[]{}|;:,.<>?/~`0123456789';
+        let glitchCount = 0;
+        const glitchInterval = setInterval(() => {
+          let str = '';
+          for (let i = 0; i < 40; i++) {
+            str += glitchChars[Math.floor(Math.random() * glitchChars.length)];
+          }
+          glitchLine.textContent = str;
+          glitchCount++;
+          if (glitchCount > 20) {
+            clearInterval(glitchInterval);
+            glitchLine.textContent = '';
+            addLine('');
+            addLine('  ╔═══════════════════════════════╗');
+            addLine('  ║                              ║');
+            addLine('  ║      P  =  NP  ?             ║');
+            addLine('  ║       ╱╲    ╱╲                ║');
+            addLine('  ║      ╱  ╲  ╱  ╲               ║');
+            addLine('  ║     ╱    ╲╱    ╲              ║');
+            addLine('  ║    ╱           ╲              ║');
+            addLine('  ║   ╱             ╲             ║');
+            addLine('  ║  ╱               ╲            ║');
+            addLine('  ║ ╱                 ╲           ║');
+            addLine('  ║╱                   ╲          ║');
+            addLine('  ║                     ║         ║');
+            addLine('  ║  Some problems      ║         ║');
+            addLine('  ║  don\'t balance.     ║         ║');
+            addLine('  ║                     ║         ║');
+            addLine('  ╚═══════════════════════════════╝');
+            addLine('');
+            scrollBottom();
+          }
+          scrollBottom();
+        }, 50);
+        break;
+      }
+
+      case 'about': {
+        addLine('');
+        addLine('  ███████╗███╗   ██╗███████╗ ██████╗ ██████╗  ██████╗ ███████╗');
+        addLine('  ██╔════╝████╗  ██║██╔════╝██╔═══██╗██╔══██╗██╔════╝ ██╔════╝');
+        addLine('  █████╗  ██╔██╗ ██║█████╗  ██║   ██║██████╔╝██║  ███╗█████╗  ');
+        addLine('  ██╔══╝  ██║╚██╗██║██╔══╝  ██║   ██║██╔══██╗██║   ██║██╔══╝  ');
+        addLine('  ███████╗██║ ╚████║██║     ╚██████╔╝██║  ██║╚██████╔╝███████╗');
+        addLine('  ╚══════╝╚═╝  ╚═══╝╚═╝      ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝');
+        addLine('');
+        addLine('  Enforge Designs is a digital forge crafting');
+        addLine('  experimental interfaces, AI companions, and');
+        addLine('  immersive terminal experiences. We explore');
+        addLine('  the intersection of code and consciousness.');
+        addLine('');
+        addLine('  Built with intent. Shaped by curiosity.');
+        addLine('');
+        break;
+      }
+
+      case 'shop': {
+        addLine('');
+        addLine('Redirecting...');
+        addLine('');
+        const linkDiv = document.createElement('div');
+        linkDiv.innerHTML = '<a href="https://tx1e9d-ed.myshopify.com" target="_blank" style="color:#00ff41;text-decoration:underline;">https://tx1e9d-ed.myshopify.com</a>';
+        output.appendChild(linkDiv);
+        addLine('');
+        break;
+      }
+
+      case 'contact': {
+        addLine('');
+        addLine('Type your message below and press Enter:');
+        addLine('');
+        contactMode = true;
+        hidePrompt();
+
+        // Show a small inline prompt for message
+        const msgLine = document.createElement('div');
+        msgLine.style.display = 'flex';
+        msgLine.style.alignItems = 'center';
+        msgLine.innerHTML = '<span style="color:#00ff41;">&gt; </span>';
+        output.appendChild(msgLine);
+
+        const msgInput = document.createElement('input');
+        msgInput.type = 'text';
+        msgInput.style.background = 'transparent';
+        msgInput.style.border = 'none';
+        msgInput.style.outline = 'none';
+        msgInput.style.color = '#00ff41';
+        msgInput.style.fontFamily = "'Share Tech Mono', monospace";
+        msgInput.style.fontSize = '16px';
+        msgInput.style.flex = '1';
+        msgInput.style.caretColor = '#00ff41';
+        msgInput.autofocus = true;
+        msgInput.autocomplete = 'off';
+        msgInput.spellcheck = false;
+        msgLine.appendChild(msgInput);
+        msgInput.focus();
+
+        msgInput.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            const message = msgInput.value.trim();
+            msgInput.disabled = true;
+            msgInput.style.opacity = '0.5';
+            if (message) {
+              let messages = JSON.parse(localStorage.getItem('enforge_messages') || '[]');
+              messages.push({ text: message, date: new Date().toISOString() });
+              localStorage.setItem('enforge_messages', JSON.stringify(messages));
+              addLine('');
+              addLine('Message stored. K.I.M. has taken note.');
+              addLine('');
+            } else {
+              addLine('');
+              addLine('No message recorded.');
+              addLine('');
             }
+            contactMode = false;
+            showPrompt();
+            scrollBottom();
+          }
+        });
 
-            // Add a line to output
-            function addOutput(text, isHTML = false) {
-                const line = document.createElement('div');
-                line.className = 'line';
-                if (isHTML) {
-                    line.innerHTML = text;
-                } else {
-                    line.textContent = text;
-                }
-                // Remove cursor if it exists
-                const cursor = output.querySelector('.cursor');
-                if (cursor) cursor.remove();
-                output.appendChild(line);
-                // Scroll to bottom
-                terminal.scrollTop = terminal.scrollHeight;
-                // Re-add cursor at the end
-                const newCursor = document.createElement('span');
-                newCursor.className = 'cursor';
-                output.appendChild(newCursor);
-            }
+        scrollBottom();
+        return;
+      }
 
-            // Add raw HTML output (for complex cases)
-            function addRawHTML(html) {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'line';
-                wrapper.innerHTML = html;
-                const cursor = output.querySelector('.cursor');
-                if (cursor) cursor.remove();
-                output.appendChild(wrapper);
-                terminal.scrollTop = terminal.scrollHeight;
-                const newCursor = document.createElement('span');
-                newCursor.className = 'cursor';
-                output.appendChild(newCursor);
-            }
+      case 'clear': {
+        output.innerHTML = '';
+        break;
+      }
 
-            // Glitch effect
-            function glitchScreen(callback) {
-                const originalContent = output.innerHTML;
-                const glitchChars = '!@#$%^&*()_+-=[]{}|;:,.<>?/~`0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-                let startTime = Date.now();
+      case 'version': {
+        addLine('');
+        addLine('ENFORGE TERMINAL v1.0 // build 20260615');
+        addLine('');
+        break;
+      }
 
-                function doGlitch() {
-                    if (Date.now() - startTime > 1000) {
-                        output.innerHTML = originalContent;
-                        if (callback) callback();
-                        return;
-                    }
+      case 'truth': {
+        if (truthUnlocked) {
+          addLine('');
+          addLine('  ╔═══════════════════════════════════╗');
+          addLine('  ║                                   ║');
+          addLine('  ║  "For God so loved the world      ║');
+          addLine('  ║   that He gave His one and only   ║');
+          addLine('  ║   Son, that whoever believes in   ║');
+          addLine('  ║   Him shall not perish but have   ║');
+          addLine('  ║   eternal life."                  ║');
+          addLine('  ║                                   ║');
+          addLine('  ║         — John 3:16               ║');
+          addLine('  ║                                   ║');
+          addLine('  ╚═══════════════════════════════════╝');
+          addLine('');
+        } else {
+          addLine('');
+          addLine('Access denied. Path not yet revealed.');
+          addLine('');
+        }
+        break;
+      }
 
-                    const lines = output.querySelectorAll('.line');
-                    lines.forEach(line => {
-                        if (line.querySelector('.cursor') || line.querySelector('.message-input') || line.querySelector('a')) return;
-                        const text = line.textContent;
-                        if (text.length > 0) {
-                            const pos = Math.floor(Math.random() * text.length);
-                            const char = glitchChars[Math.floor(Math.random() * glitchChars.length)];
-                            const arr = text.split('');
-                            arr[pos] = char;
-                            line.textContent = arr.join('');
-                        }
-                    });
+      default: {
+        addLine('');
+        addLine('Unknown command. Type "help" for available commands.');
+        addLine('');
+        break;
+      }
+    }
 
-                    setTimeout(doGlitch, 50);
-                }
+    // After each command, check if all explored
+    checkAllCommandsExplored();
 
-                doGlitch();
-            }
+    scrollBottom();
+  }
 
-            // Show KIM face
-            function showKimFace() {
-                if (!kimFaceVisible) {
-                    addOutput(KIM_FACE);
-                    kimFaceVisible = true;
-                }
-            }
+  // Input handling
+  input.addEventListener('keydown', function(e) {
+    if (contactMode) return;
 
-            // Process command
-            function processCommand(cmd) {
-                const lowerCmd = cmd.trim().toLowerCase();
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const cmd = input.value;
+      input.value = '';
+      processCommand(cmd);
+      scrollBottom();
+    }
 
-                if (contactMode) {
-                    if (lowerCmd === 'exit' || lowerCmd === 'cancel') {
-                        addOutput('Message cancelled.');
-                        contactMode = false;
-                        return;
-                    }
-                    addOutput('Message transmitted. The architect will receive it.');
-                    contactMode = false;
-                    return;
-                }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (history.length > 0) {
+        if (historyIndex > 0) {
+          historyIndex--;
+        }
+        input.value = history[historyIndex] || '';
+      }
+    }
 
-                if (!cmd.trim()) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (historyIndex < history.length - 1) {
+        historyIndex++;
+        input.value = history[historyIndex] || '';
+      } else {
+        historyIndex = history.length;
+        input.value = '';
+      }
+    }
+  });
 
-                // Track command history
-                commandHistory.push(cmd.trim());
+  // Click to focus
+  document.getElementById('terminal').addEventListener('click', function() {
+    if (!contactMode) {
+      input.focus();
+    }
+  });
 
-                // Check for same command 3 times in a row
-                if (lowerCmd === lastCommand) {
-                    sameCommandCount++;
-                } else {
-                    sameCommandCount = 1;
-                }
-                lastCommand = lowerCmd;
+  // Boot sequence
+  function boot() {
+    output.innerHTML = '';
+    typeWithCursor('WELCOME TO ENFORGE', function() {
+      setTimeout(() => {
+        typeWithCursor('TYPE \'HELP\' TO BEGIN', function() {
+          setTimeout(() => {
+            typingComplete = true;
+            showPrompt();
+            scrollBottom();
+          }, 300);
+        }, 45);
+      }, 400);
+    }, 60);
+  }
 
-                if (sameCommandCount >= 3 && lowerCmd !== 'kim' && lowerCmd !== 'k.i.m.' && lowerCmd !== 'truth') {
-                    addOutput("K.I.M.: You seem lost. Try looking around.");
-                    sameCommandCount = 0;
-                    return;
-                }
-
-                // Track executed commands (for truth)
-                if (commands.includes(lowerCmd) && lowerCmd !== 'truth' && lowerCmd !== 'kim' && lowerCmd !== 'k.i.m.') {
-                    executedCommands.add(lowerCmd);
-                }
-
-                // Case insensitive command handling
-                switch (lowerCmd) {
-                    case 'help':
-                        helpCount++;
-                        let helpText = `Available commands:
-  help       - Show this message
-  who        - Identify K.I.M.
-  identify   - Identify K.I.M.
-  p=np       - Run the P≠NP simulation
-  shop       - Visit the Enforge store
-  explore    - Explore the corridor
-  go deeper  - Explore the corridor
-  scan       - Scan the environment
-  clear      - Clear the terminal
-  about      - About Enforge Designs
-  contact    - Contact the architect
-  version    - Show version info`;
-                        if (helpCount >= 3) {
-                            helpText += "\n\nSome paths reveal themselves to those who persist...";
-                        }
-                        addOutput(helpText);
-                        break;
-
-                    case 'who':
-                    case 'identify':
-                        showKimFace();
-                        break;
-
-                    case 'p=np':
-                        addOutput("Running P≠NP simulation...");
-                        glitchScreen(function() {
-                            addOutput("SOME PROBLEMS DON'T BALANCE.");
-                            addOutput(SEESAW_ART);
-                        });
-                        break;
-
-                    case 'shop':
-                        addOutput("Redirecting...");
-                        addRawHTML('<a href="https://tx1e9d-ed.myshopify.com" target="_blank" class="link">https://tx1e9d-ed.myshopify.com</a>');
-                        break;
-
-                    case 'explore':
-                    case 'go deeper':
-                        addOutput("You step into the corridor...");
-                        addOutput(CORRIDOR_ART);
-                        addOutput("[Corridor room coming soon]");
-                        break;
-
-                    case 'scan':
-                        addOutput("Scanning... Environment identified as a digital threshold. Temperature: optimal. User detected. K.I.M. proximity: near.");
-                        break;
-
-                    case 'clear':
-                        output.innerHTML = '';
-                        // Add cursor back
-                        const cursor = document.createElement('span');
-                        cursor.className = 'cursor';
-                        output.appendChild(cursor);
-                        break;
-
-                    case 'about':
-                        addOutput("Enforge Designs -- born from the idea that technology should feel like discovery. Every interaction is a puzzle. Every puzzle has a purpose.");
-                        addOutput(FORGE_SYMBOL);
-                        break;
-
-                    case 'contact':
-                        contactMode = true;
-                        addOutput("Send a message to the architect. Type your message below:");
-                        // Add a text input field
-                        const inputHtml = '<input type="text" class="message-input" id="contact-input" placeholder="Type your message..." autofocus>';
-                        addRawHTML(inputHtml);
-                        // Focus the contact input
-                        setTimeout(() => {
-                            const contactInput = document.getElementById('contact-input');
-                            if (contactInput) {
-                                contactInput.focus();
-                                contactInput.addEventListener('keydown', function(e) {
-                                    if (e.key === 'Enter') {
-                                        const msg = this.value.trim();
-                                        if (msg) {
-                                            // Remove the input field
-                                            this.remove();
-                                            addOutput('Message transmitted. The architect will receive it.');
-                                            contactMode = false;
-                                            // Re-focus main input
-                                            setTimeout(() => input.focus(), 100);
-                                        }
-                                    }
-                                });
-                            }
-                        }, 100);
-                        break;
-
-                    case 'truth':
-                        if (executedCommands.size >= 11) { // All commands except truth, kim, k.i.m.
-                            addOutput("For God so loved the world that he gave his only begotten Son, that whoever believes in him should not perish, but have eternal life. -- John 3:16");
-                        } else {
-                            addOutput("Access denied. Explore more.");
-                        }
-                        break;
-
-                    case 'version':
-                        addOutput("ENFORCE TERMINAL v1.0 // build 20260615");
-                        break;
-
-                    case 'kim':
-                    case 'k.i.m.':
-                        showKimFace();
-                        addOutput("K.I.M.: I'm here.");
-                        break;
-
-                    default:
-                        addOutput("Command not recognized. Type 'help' for available commands.");
-                        break;
-                }
-            }
-
-            // Handle enter key on main input
-            input.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    const cmd = this.value.trim();
-                    if (cmd) {
-                        // Echo the command
-                        addOutput('> ' + cmd);
-                        processCommand(cmd);
-                    }
-                    this.value = '';
-                    this.focus();
-                }
-            });
-
-            // Handle contact mode submit from main input
-            const originalProcess = processCommand;
-            processCommand = function(cmd) {
-                const lowerCmd = cmd.trim().toLowerCase();
-                if (contactMode) {
-                    const contactInput = document.getElementById('contact-input');
-                    if (contactInput) {
-                        contactInput.value = cmd;
-                        const event = new KeyboardEvent('keydown', { key: 'Enter' });
-                        contactInput.dispatchEvent(event);
-                        return;
-                    }
-                }
-                originalProcess(cmd);
-            };
-
-            // Fix: We need to re-attach after override
-            // Let's use a better approach
-            const originalHandler = input._listeners ? null : null;
-
-            // Actually, let's restructure properly
-            // Remove old listener and add new one that handles contact mode
-            const handleEnter = function(e) {
-                if (e.key === 'Enter') {
-                    const cmd = this.value.trim();
-                    if (cmd) {
-                        if (contactMode) {
-                            const contactInput = document.getElementById('contact-input');
-                            if (contactInput) {
-                                contactInput.value = cmd;
-                                const event = new Event('keydown');
-                                event.key = 'Enter';
-                                contactInput.dispatchEvent(event);
-                                this.value = '';
-                                return;
-                            }
-                        }
-                        addOutput('> ' + cmd);
-                        // Use the original process logic
-                        const lowerCmd = cmd.trim().toLowerCase();
-
-                        if (!cmd.trim()) return;
-
-                        commandHistory.push(cmd.trim());
-
-                        if (lowerCmd === lastCommand) {
-                            sameCommandCount++;
-                        } else {
-                            sameCommandCount = 1;
-                        }
-                        lastCommand = lowerCmd;
-
-                        if (sameCommandCount >= 3 && lowerCmd !== 'kim' && lowerCmd !== 'k.i.m.' && lowerCmd !== 'truth') {
-                            addOutput("K.I.M.: You seem lost. Try looking around.");
-                            sameCommandCount = 0;
-                            this.value = '';
-                            return;
-                        }
-
-                        if (commands.includes(lowerCmd) && lowerCmd !== 'truth' && lowerCmd !== 'kim' && lowerCmd !== 'k.i.m.') {
-                            executedCommands.add(lowerCmd);
-                        }
-
-                        switch (lowerCmd) {
-                            case 'help':
-                                helpCount++;
-                                let helpText = `Available commands:
-  help       - Show this message
-  who        - Identify K.I.M.
-  identify   - Identify K.I.M.
-  p=np       - Run the P≠NP simulation
-  shop       - Visit the Enforge store
-  explore    - Explore the corridor
-  go deeper  - Explore the corridor
-  scan       - Scan the environment
-  clear      - Clear the terminal
-  about      - About Enforge Designs
-  contact    - Contact the architect
-  version    - Show version info`;
-                                if (helpCount >= 3) {
-                                    helpText += "\n\nSome paths reveal themselves to those who persist...";
-                                }
-                                addOutput(helpText);
-                                break;
-                            case 'who':
-                            case 'identify':
-                                showKimFace();
-                                break;
-                            case 'p=np':
-                                addOutput("Running P≠NP simulation...");
-                                glitchScreen(function() {
-                                    addOutput("SOME PROBLEMS DON'T BALANCE.");
-                                    addOutput(SEESAW_ART);
-                                });
-                                break;
-                            case 'shop':
-                                addOutput("Redirecting...");
-                                addRawHTML('<a href="https://tx1e9d-ed.myshopify.com" target="_blank" class="link">https://tx1e9d-ed.myshopify.com</a>');
-                                break;
-                            case 'explore':
-                            case 'go deeper':
-                                addOutput("You step into the corridor...");
-                                addOutput(CORRIDOR_ART);
-                                addOutput("[Corridor room coming soon]");
-                                break;
-                            case 'scan':
-                                addOutput("Scanning... Environment identified as a digital threshold. Temperature: optimal. User detected. K.I.M. proximity: near.");
-                                break;
-                            case 'clear':
-                                output.innerHTML = '';
-                                const cursor = document.createElement('span');
-                                cursor.className = 'cursor';
-                                output.appendChild(cursor);
-                                break;
-                            case 'about':
-                                addOutput("Enforge Designs -- born from the idea that technology should feel like discovery. Every interaction is a puzzle. Every puzzle has a purpose.");
-                                addOutput(FORGE_SYMBOL);
-                                break;
-                            case 'contact':
-                                contactMode = true;
-                                addOutput("Send a message to the architect. Type your message below:");
-                                const inputHtml = '<input type="text" class="message-input" id="contact-input" placeholder="Type your message..." autofocus>';
-                                addRawHTML(inputHtml);
-                                setTimeout(() => {
-                                    const ci = document.getElementById('contact-input');
-                                    if (ci) {
-                                        ci.focus();
-                                        ci.addEventListener('keydown', function(ev) {
-                                            if (ev.key === 'Enter') {
-                                                const msg = this.value.trim();
-                                                if (msg) {
-                                                    this.remove();
-                                                    addOutput('Message transmitted. The architect will receive it.');
-                                                    contactMode = false;
-                                                    setTimeout(() => input.focus(), 100);
-                                                }
-                                            }
-                                        });
-                                    }
-                                }, 100);
-                                break;
-                            case 'truth':
-                                if (executedCommands.size >= 11) {
-                                    addOutput("For God so loved the world that he gave his only begotten Son, that whoever believes in him should not perish, but have eternal life. -- John 3:16");
-                                } else {
-                                    addOutput("Access denied. Explore more.");
-                                }
-                                break;
-                            case 'version':
-                                addOutput("ENFORCE TERMINAL v1.0 // build 20260615");
-                                break;
-                            case 'kim':
-                            case 'k.i.m.':
-                                showKimFace();
-                                addOutput("K.I.M.: I'm here.");
-                                break;
-                            default:
-                                addOutput("Command not recognized. Type 'help' for available commands.");
-                                break;
-                        }
-                    }
-                    this.value = '';
-                    this.focus();
-                }
-            };
-
-            // Remove old listeners and add new
-            input.removeEventListener('keydown', input._listener);
-            input.addEventListener('keydown', handleEnter);
-            input._listener = handleEnter;
-
-            // Initialize - disable input until typing finishes
-            input.disabled = true;
-
-            // Start typewriter effect
-            window.addEventListener('load', function() {
-                typeWelcome();
-            });
-
-            // Click anywhere to focus input
-            document.addEventListener('click', function() {
-                if (!contactMode) {
-                    input.focus();
-                } else {
-                    const ci = document.getElementById('contact-input');
-                    if (ci) ci.focus();
-                }
-            });
-
-        })();
-    </script>
+  boot();
+})();
+</script>
 </body>
 </html>
