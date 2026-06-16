@@ -1,166 +1,171 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enforge Terminal</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enforge Terminal</title>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
 
-        body {
-            background: #0a0a0a;
-            color: #00ff41;
-            font-family: 'Courier New', monospace;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
+    body {
+        background: #0a0a0a;
+        color: #00ff41;
+        font-family: 'Courier New', monospace;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
 
-        #terminal {
-            width: 90%;
-            max-width: 800px;
-            height: 80vh;
-            background: #0d0d0d;
-            border: 1px solid #00ff41;
-            border-radius: 8px;
-            padding: 20px;
-            overflow-y: auto;
-            box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
-        }
+    #terminal {
+        width: 90%;
+        max-width: 800px;
+        height: 80vh;
+        background: #0d0d0d;
+        border: 1px solid #00ff41;
+        border-radius: 8px;
+        padding: 20px;
+        overflow-y: auto;
+        box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
+    }
 
-        #terminal::-webkit-scrollbar {
-            width: 8px;
-        }
+    #terminal::-webkit-scrollbar {
+        width: 8px;
+    }
 
-        #terminal::-webkit-scrollbar-track {
-            background: #0d0d0d;
-        }
+    #terminal::-webkit-scrollbar-track {
+        background: #0d0d0d;
+    }
 
-        #terminal::-webkit-scrollbar-thumb {
-            background: #00ff41;
-            border-radius: 4px;
-        }
+    #terminal::-webkit-scrollbar-thumb {
+        background: #00ff41;
+        border-radius: 4px;
+    }
 
-        #output {
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            line-height: 1.6;
-        }
+    #output {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        line-height: 1.6;
+    }
 
-        .command-output {
-            margin: 5px 0;
-        }
+    .command-output {
+        margin: 5px 0;
+    }
 
-        .prompt-line {
-            display: flex;
-            align-items: center;
-            margin: 10px 0;
-        }
+    .prompt-line {
+        display: flex;
+        align-items: center;
+        margin: 10px 0;
+    }
 
-        .prompt {
-            color: #00ff41;
-            margin-right: 10px;
-        }
+    .prompt {
+        color: #00ff41;
+        margin-right: 10px;
+    }
 
-        #command-input {
-            background: transparent;
-            border: none;
-            color: #00ff41;
-            font-family: 'Courier New', monospace;
-            font-size: 16px;
-            flex: 1;
-            outline: none;
-            caret-color: #00ff41;
-        }
+    #command-input {
+        background: transparent;
+        border: none;
+        color: #00ff41;
+        font-family: 'Courier New', monospace;
+        font-size: 16px;
+        flex: 1;
+        outline: none;
+        caret-color: #00ff41;
+    }
 
-        .ascii-art {
-            color: #00ff41;
-            line-height: 1.2;
-            font-size: 12px;
-        }
+    .ascii-art {
+        color: #00ff41;
+        line-height: 1.2;
+        font-size: 12px;
+    }
 
-        .error {
-            color: #ff4444;
-        }
+    .error {
+        color: #ff4444;
+    }
 
-        .info {
-            color: #888;
-        }
+    .info {
+        color: #888;
+    }
 
-        .success {
-            color: #00ff41;
-        }
-    </style>
+    .success {
+        color: #00ff41;
+    }
+</style>
 </head>
 <body>
-    <div id="terminal">
-        <div id="output">
-            <div class="command-output">Welcome to Enforge Terminal v1.0</div>
-            <div class="command-output">Type 'help' for available commands.</div>
-            <div class="command-output">&nbsp;</div>
-        </div>
-        <div class="prompt-line">
-            <span class="prompt">enforge:~$</span>
-            <input type="text" id="command-input" autofocus />
-        </div>
+<div id="terminal">
+    <div id="output">
+        <div class="command-output">Welcome to Enforge Terminal v1.0</div>
+        <div class="command-output">Type 'help' for available commands.</div>
+        <div class="command-output">&nbsp;</div>
     </div>
+    <div class="prompt-line">
+        <span class="prompt">enforge:~$</span>
+        <input type="text" id="command-input" autofocus />
+    </div>
+</div>
 
-    <script>
-        const output = document.getElementById('output');
-        const commandInput = document.getElementById('command-input');
+<script>
+    const output = document.getElementById('output');
+    const commandInput = document.getElementById('command-input');
 
-        commandInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                const command = commandInput.value;
-                commandInput.value = '';
-                processCommand(command);
-            }
-        });
+    commandInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            const command = commandInput.value;
+            commandInput.value = '';
+            processCommand(command);
+        }
+    });
 
-        function processCommand(command) {
-            const cmdLower = command.toLowerCase().trim();
-            output.innerHTML += `<div class="command-output"><span class="prompt">enforge:~$</span> ${command}</div>`;
+    function processCommand(command) {
+        const cmdLower = command.toLowerCase().trim();
+        output.innerHTML += `<div class="command-output"><span class="prompt">enforge:~$</span> ${command}</div>`;
 
-            if (cmdLower === 'help') {
-                output.innerHTML += `<div class="command-output">Available commands:</div>`;
-                output.innerHTML += `<div class="command-output">  help     - Show this help message</div>`;
-                output.innerHTML += `<div class="command-output">  about    - About Enforge</div>`;
-                output.innerHTML += `<div class="command-output">  explore  - Explore the corridor</div>`;
-                output.innerHTML += `<div class="command-output">  clear    - Clear the terminal</div>`;
-                output.innerHTML += `<div class="command-output">  whoami   - Display current user</div>`;
-            } else if (cmdLower === 'about') {
-                output.innerHTML += `<div class="command-output">Enforge Terminal - A mysterious digital realm.</div>`;
-                output.innerHTML += `<div class="command-output">Version 1.0 | Built with ❤️</div>`;
-            } else if (cmdLower === 'explore' || cmdLower === 'go deeper') {
-                output.innerHTML += `<div class="command-output">Opening corridor...</div>`;
-                setTimeout(() => {
-                    window.open('corridor.html', '_blank');
-                }, 1000);
-            } else if (cmdLower === 'clear') {
-                output.innerHTML = '';
-            } else if (cmdLower === 'whoami') {
-                output.innerHTML += `<div class="command-output">enforcer</div>`;
-            } else if (cmdLower === '') {
-                // Do nothing
-            } else {
-                output.innerHTML += `<div class="command-output error">Command not found: ${command}</div>`;
-            }
-
-            // Scroll to bottom
-            const terminal = document.getElementById('terminal');
-            terminal.scrollTop = terminal.scrollHeight;
+        if (cmdLower === 'help') {
+            output.innerHTML += `<div class="command-output">Available commands:</div>`;
+            output.innerHTML += `<div class="command-output">  help     - Show this help message</div>`;
+            output.innerHTML += `<div class="command-output">  about    - About Enforge</div>`;
+            output.innerHTML += `<div class="command-output">  explore  - Explore the corridor</div>`;
+            output.innerHTML += `<div class="command-output">  clear    - Clear the terminal</div>`;
+            output.innerHTML += `<div class="command-output">  whoami   - Display current user</div>`;
+        } else if (cmdLower === 'about') {
+            output.innerHTML += `<div class="command-output">Enforge Terminal - A mysterious digital realm.</div>`;
+            output.innerHTML += `<div class="command-output">Version 1.0 | Built with ❤️</div>`;
+        } else if (cmdLower === 'explore' || cmdLower === 'go deeper') {
+            output.innerHTML += `<div class="command-output">Opening corridor...</div>`;
+            setTimeout(() => {
+                window.open('corridor.html', '_blank');
+            }, 1000);
+        } else if (cmdLower === 'clear') {
+            output.innerHTML = '';
+        } else if (cmdLower === 'whoami') {
+            output.innerHTML += `<div class="command-output">enforcer</div>`;
+        } else if (cmdLower === 'kim') {
+            output.innerHTML += `<div class="command-output">Initializing K.I.M. interface...</div>`;
+            setTimeout(() => {
+                window.open('kim.html', '_blank');
+            }, 1000);
+        } else if (cmdLower === '') {
+            // Do nothing
+        } else {
+            output.innerHTML += `<div class="command-output error">Command not found: ${command}</div>`;
         }
 
-        // Focus input on click
-        document.getElementById('terminal').addEventListener('click', function() {
-            commandInput.focus();
-        });
-    </script>
+        // Scroll to bottom
+        const terminal = document.getElementById('terminal');
+        terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    // Focus input on click
+    document.getElementById('terminal').addEventListener('click', function() {
+        commandInput.focus();
+    });
+</script>
 </body>
 </html>
