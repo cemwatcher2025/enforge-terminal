@@ -196,11 +196,11 @@
         /* Knocker */
         .knocker-ring {
             position: absolute;
-            bottom: 40px;
+            top: 55%;
             left: 50%;
-            transform: translateX(-50%);
-            width: 40px;
-            height: 50px;
+            transform: translate(-50%, -50%);
+            width: 48px;
+            height: 60px;
             border: 3px solid #00ff41;
             border-radius: 50% 50% 40% 40%;
             cursor: pointer;
@@ -212,7 +212,7 @@
             font-size: 10px;
         }
         .knocker-ring.bang {
-            transform: translateX(-50%) rotate(10deg) scale(0.95);
+            transform: translate(-50%, -50%) rotate(10deg) scale(0.95);
         }
         .knocker-count {
             font-size: 10px;
@@ -225,9 +225,9 @@
         /* Dial lock */
         .dial-container {
             position: absolute;
-            right: -30px;
-            top: 30%;
-            width: 50px;
+            right: 8px;
+            top: 15%;
+            width: 44px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -276,20 +276,21 @@
         /* Zipper */
         .zipper-pull {
             position: absolute;
-            bottom: -15px;
-            right: -15px;
-            width: 24px;
-            height: 24px;
-            border: 2px solid #00ff41;
+            bottom: -18px;
+            right: -18px;
+            width: 36px;
+            height: 36px;
+            border: 3px solid #00ff41;
             border-radius: 50%;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 8px;
+            font-size: 11px;
             background: rgba(0,0,0,0.8);
             transition: background 0.2s;
             z-index: 25;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.4);
         }
         .zipper-pull:hover {
             background: rgba(0, 255, 65, 0.3);
